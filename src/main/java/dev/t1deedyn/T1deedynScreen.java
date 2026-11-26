@@ -186,6 +186,7 @@ public final class T1deedynScreen extends Screen {
                 c.drawText(textRenderer, "Непрозрачность панели", x, py + 151, TEXT, false);
                 slider(c, x, py + 177, contentRight, ModConfig.menuOpacity, 0.72, 1.0, 1);
                 c.drawText(textRenderer, "Затемнение мира", x, py + 220, TEXT, false);
+                toggle(c, x, py + 278, contentRight, "Раскрывать по одной", ModConfig.autoBerryAccordion);
                 slider(c, x, py + 246, contentRight, ModConfig.backgroundDim, 0.0, 0.75, 2);
                 c.drawText(textRenderer, "X или ESC  •  закрыть меню", x, py + panelHeight - 28, MUTED, false);
             }
@@ -406,6 +407,7 @@ public final class T1deedynScreen extends Screen {
             ModConfig.save(); return true;
         }
         if (selectedTab == 6) {
+            if(my>=top+270&&my<=top+302&&mx>=right-55){ModConfig.autoBerryAccordion=!ModConfig.autoBerryAccordion;ModConfig.save();return true;}
             if (my >= top + 167 && my <= top + 191) activeSlider = 1;
             else if (my >= top + 236 && my <= top + 260) activeSlider = 2;
             if (activeSlider >= 0) { sliderDragging = true; setSlider(mx); return true; }
@@ -430,6 +432,7 @@ public final class T1deedynScreen extends Screen {
     }
 
     @Override public boolean mouseReleased(double mx, double my, int button) {
+        if(button==1 && pendingCardHeader){if(pendingCardToggle)AutoBerry.toggle();else autoBerryCard.toggle();pendingCardHeader=false;pendingCardToggle=false;return true;}
         if (button == 0) {
             dragging = false; sliderDragging = false; activeSlider = -1;
             boolean consumed = contentDragConsumed || scrollPanel.consumedClick(); contentDragConsumed = false; scrollPanel.mouseUp();
