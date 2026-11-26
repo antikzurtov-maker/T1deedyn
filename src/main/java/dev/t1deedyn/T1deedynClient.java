@@ -34,7 +34,6 @@ public final class T1deedynClient implements ClientModInitializer {
                 "category.t1deedyn.main"));
         AutoBerry.registerTick();
         BerryHighlightRenderer.register();
-        ClientTickEvents.END_CLIENT_TICK.register(BerryHighlightRenderer::tick);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleAutoBerry.wasPressed()) AutoBerry.toggle();
