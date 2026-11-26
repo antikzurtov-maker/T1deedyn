@@ -14,6 +14,7 @@ import org.lwjgl.glfw.GLFW;
 public final class T1deedynClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("T1deedyn");
     private static KeyBinding openMenu;
+    private static KeyBinding toggleAutoBerry;
 
     @Override
     public void onInitializeClient() {
@@ -21,8 +22,13 @@ public final class T1deedynClient implements ClientModInitializer {
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.t1deedyn.open_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X,
                 "category.t1deedyn.main"));
+        toggleAutoBerry = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.t1deedyn.auto_berry", InputUtil.Type.KEYSYM, ModConfig.autoBerryToggleKey,
+                "category.t1deedyn.main"));
+        AutoBerry.registerTick();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (toggleAutoBerry.wasPressed()) AutoBerry.toggle();
             while (openMenu.wasPressed()) {
                 if (client.currentScreen == null) client.setScreen(new T1deedynScreen());
                 else if (client.currentScreen instanceof T1deedynScreen) client.setScreen(null);
