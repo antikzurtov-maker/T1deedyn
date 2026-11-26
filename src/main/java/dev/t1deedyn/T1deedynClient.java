@@ -33,6 +33,8 @@ public final class T1deedynClient implements ClientModInitializer {
                 "key.t1deedyn.auto_berry", InputUtil.Type.KEYSYM, ModConfig.autoBerryToggleKey < 0 ? GLFW.GLFW_KEY_UNKNOWN : ModConfig.autoBerryToggleKey,
                 "category.t1deedyn.main"));
         AutoBerry.registerTick();
+        BerryHighlightRenderer.register();
+        ClientTickEvents.END_CLIENT_TICK.register(BerryHighlightRenderer::tick);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleAutoBerry.wasPressed()) AutoBerry.toggle();
