@@ -46,8 +46,8 @@ public final class BlackCloverScreen extends Screen {
         RoundedRect.border(c,layout.sidebarX,y+UiLayout.GAP,layout.sidebarWidth,h-UiLayout.GAP*2,10,1,Theme.BORDER,Theme.PANEL);
         int logoX=layout.sidebarX+(layout.sidebarWidth-64)/2;
         CloverMark.draw(c,logoX,y+22,64,accent);
-        c.drawCenteredText(textRenderer,"ЧЁРНЫЙ",layout.sidebarX+layout.sidebarWidth/2,y+91,Theme.TEXT);
-        c.drawCenteredText(textRenderer,"КЛЕВЕР",layout.sidebarX+layout.sidebarWidth/2,y+103,Theme.TEXT);
+        drawCentered(c,"ЧЁРНЫЙ",layout.sidebarX+layout.sidebarWidth/2,y+91,Theme.TEXT);
+        drawCentered(c,"КЛЕВЕР",layout.sidebarX+layout.sidebarWidth/2,y+103,Theme.TEXT);
         int tabY=y+132;
         hoverTab=-1;
         for(int i=0;i<TABS.length;i++){
@@ -77,8 +77,8 @@ public final class BlackCloverScreen extends Screen {
         c.drawText(textRenderer,"Тема ⌄",Math.min(mainRight-110,controlsX+95),y+UiLayout.GAP+14,accent,false);
         RoundedRect.fill(c,mainRight-66,y+UiLayout.GAP+4,28,28,7,Theme.CARD);
         RoundedRect.fill(c,mainRight-34,y+UiLayout.GAP+4,28,28,7,Theme.CARD);
-        c.drawCenteredText(textRenderer,"—",mainRight-52,y+UiLayout.GAP+13,Theme.TEXT);
-        c.drawCenteredText(textRenderer,"×",mainRight-20,y+UiLayout.GAP+13,Theme.TEXT);
+        drawCentered(c,"—",mainRight-52,y+UiLayout.GAP+13,Theme.TEXT);
+        drawCentered(c,"×",mainRight-20,y+UiLayout.GAP+13,Theme.TEXT);
 
         int contentY=layout.contentY;
         int contentH=layout.contentHeight;
@@ -87,12 +87,12 @@ public final class BlackCloverScreen extends Screen {
         CloverMark.draw(c,mainX+12,contentY+12,30,accent);
         c.drawText(textRenderer,TABS[selectedTab].toUpperCase(java.util.Locale.ROOT),mainX+52,contentY+15,accent,false);
         c.drawText(textRenderer,DESCRIPTIONS[selectedTab],mainX+12,contentY+51,Theme.TEXT_DIM,false);
-        c.drawCenteredText(textRenderer,"Список функций будет размещён здесь",mainX+centerW/2,contentY+contentH/2,Theme.TEXT_DIM);
+        drawCentered(c,"Список функций будет размещён здесь",mainX+centerW/2,contentY+contentH/2,Theme.TEXT_DIM);
         if(!layout.compact){
             RoundedRect.border(c,layout.settingsX,contentY,layout.settingsWidth,contentH,9,1,Theme.BORDER,Theme.PANEL);
             CloverMark.draw(c,layout.settingsX+12,contentY+12,28,accent);
             c.drawText(textRenderer,"НАСТРОЙКИ",layout.settingsX+48,contentY+18,accent,false);
-            c.drawCenteredText(textRenderer,"Выберите функцию",layout.settingsX+layout.settingsWidth/2,contentY+contentH/2,Theme.TEXT_DIM);
+            drawCentered(c,"Выберите функцию",layout.settingsX+layout.settingsWidth/2,contentY+contentH/2,Theme.TEXT_DIM);
         }
         // Creator tag, attached to the lower-right corner of the window.
         int tagW=Math.min(190,w-20),tagX=x+w-tagW,tagY=y+h+5;
@@ -101,7 +101,7 @@ public final class BlackCloverScreen extends Screen {
         c.drawText(textRenderer,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,bright,false);
     }
 
-    @Override public boolean mouseClicked(double mx,double my,int button){
+    private void drawCentered(DrawContext c,String value,int centerX,int y,int color){\n        c.drawText(textRenderer,value,centerX-textRenderer.getWidth(value)/2,y,color,false);\n    }\n\n    @Override public boolean mouseClicked(double mx,double my,int button){
         if(layout==null)layout=new UiLayout(width,height);
         int x=layout.x,y=layout.y;
         if(button==0){
