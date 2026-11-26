@@ -28,6 +28,7 @@ public final class BlackCloverScreen extends Screen {
     private boolean minimized;
     private String search="";
     private int hoverRow=-1;
+    private int draggingSlider=-1;
 
     public BlackCloverScreen(){super(Text.literal("Чёрный Клевер"));}
     @Override protected void init(){layout=new UiLayout(width,height);refreshFeatures();}
@@ -119,22 +120,52 @@ public final class BlackCloverScreen extends Screen {
         c.disableScissor();
         if(visibleFeatures.isEmpty())drawCentered(c,"Ничего не найдено",mainX+centerW/2,contentY+contentH/2,Theme.TEXT_DIM);
         if(!layout.compact){
-            RoundedRect.border(c,layout.settingsX,contentY,layout.settingsWidth,contentH,9,1,Theme.BORDER,Theme.PANEL);
-            CloverMark.draw(c,layout.settingsX+12,contentY+12,28,accent);
-            c.drawText(textRenderer,"НАСТРОЙКИ",layout.settingsX+48,contentY+18,accent,false);
+            int sx=layout.settingsX, sw=layout.settingsWidth;
+            RoundedRect.border(c,sx,contentY,sw,contentH,9,1,Theme.BORDER,Theme.PANEL);
+            CloverMark.draw(c,sx+12,contentY+12,28,accent);
+            c.drawText(textRenderer,"НАСТРОЙКИ",sx+48,contentY+18,accent,false);
             if(selectedFeature>=0&&selectedFeature<visibleFeatures.size()){
                 CloverFeature feature=visibleFeatures.get(selectedFeature);
-                c.drawText(textRenderer,feature.name,layout.settingsX+12,contentY+58,Theme.TEXT,false);
-                c.drawText(textRenderer,feature.description,layout.settingsX+12,contentY+78,Theme.TEXT_DIM,false);
-                c.drawText(textRenderer,"Состояние",layout.settingsX+12,contentY+116,Theme.TEXT_DIM,false);
-                drawToggle(c,layout.settingsX+layout.settingsWidth-58,contentY+110,feature.enabled(),accent);
-                c.drawText(textRenderer,feature.enabled()?"Включено":"Выключено",layout.settingsX+12,contentY+137,feature.enabled()?accent:Theme.TEXT_DIM,false);
-            }else drawCentered(c,"Выберите функцию",layout.settingsX+layout.settingsWidth/2,contentY+contentH/2,Theme.TEXT_DIM);
+                c.drawText(textRenderer,feature.name,sx+12,contentY+58,Theme.TEXT,false);
+                c.drawText(textRenderer,feature.description,sx+12,contentY+78,Theme.TEXT_DIM,false);
+                c.drawText(textRenderer,"Состояние",sx+12,contentY+116,Theme.TEXT_DIM,false);
+                drawToggle(c,sx+sw-58,contentY+110,feature.enabled(),accent);
+                c.drawText(textRenderer,feature.enabled()?"Включено":"Выключено",sx+12,contentY+137,feature.enabled()?accent:Theme.TEXT_DIM,false);
+            }else{
+                c.drawText(textRenderer,"ПРЕДПРОСМОТР HUD",sx+12,contentY+58,Theme.TEXT,false);
+                RoundedRect.fill(c,sx+10,contentY+78,sw-20,54,7,Theme.CARD);
+                c.drawText(textRenderer,"FPS: 144",sx+18,contentY+87,Theme.TEXT,false);
+                c.drawText(textRenderer,"XYZ: 120 64 -38",sx+18,contentY+103,Theme.TEXT_DIM,false);
+                c.drawText(textRenderer,"ЧЁРНЫЙ КЛЕВЕР",sx+18,contentY+119,accent,false);
+            }
+            c.drawText(textRenderer,"Прозрачность меню",sx+12,contentY+158,Theme.TEXT_DIM,false);
+            drawSlider(c,sx+12,contentY+178,sw-24,ModConfig.menuOpacity,0.72,1.0,accent);
+            c.drawText(textRenderer,String.format(java.util.Locale.ROOT,"%.0f%%",ModConfig.menuOpacity*100),sx+sw-43,contentY+158,Theme.TEXT,false);
+            c.drawText(textRenderer,"Затемнение фона",sx+12,contentY+205,Theme.TEXT_DIM,false);
+            drawSlider(c,sx+12,contentY+225,sw-24,ModConfig.backgroundDim,0.0,0.75,accent);
+            c.drawText(textRenderer,String.format(java.util.Locale.ROOT,"%.0f%%",ModConfig.backgroundDim*100),sx+sw-43,contentY+205,Theme.TEXT,false);
+            c.drawText(textRenderer,"Цветовая тема",sx+12,contentY+250,Theme.TEXT_DIM,false);
+            c.drawText(textRenderer,Theme.selected().name(),sx+12,contentY+267,accent,false);
         }
         int tagW=Math.min(190,w-20),tagX=x+w-tagW,tagY=y+h+5;
         RoundedRect.border(c,tagX,tagY,tagW,22,8,1,bright,Theme.PANEL);
         CloverMark.draw(c,tagX+6,tagY+4,14,accent);
         c.drawText(textRenderer,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,bright,false);
+    }
+
+    private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int accent){
+        int trackY=y+5; c.fill(x,trackY,x+w,trackY+4,Theme.TOGGLE_OFF);
+        int knob=x+(int)Math.round((w-8)*(value-min)/(max-min));
+        c.fill(x,trackY,x+knob+4,trackY+4,accent);
+        RoundedRect.fill(c,x+knob,trackY-3,8,10,4,Theme.TEXT);
+    }
+
+    private void setSliderValue(int slider,double mouseX){
+        int sx=layout.settingsX+12, sw=layout.settingsWidth-24;
+        double value=Math.max(0.0,Math.min(1.0,(mouseX-sx)/(double)sw));
+        if(slider==0)ModConfig.menuOpacity=0.72+value*0.28;
+        else if(slider==1)ModConfig.backgroundDim=value*0.75;
+        ModConfig.save();
     }
 
     private void drawToggle(DrawContext c,int x,int y,boolean enabled,int accent){
@@ -183,6 +214,13 @@ public final class BlackCloverScreen extends Screen {
                     return true;
                 }
             }
+            if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+12,layout.contentY+173,layout.settingsWidth-24,16)){draggingSlider=0;setSliderValue(0,mx);return true;}
+            if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+12,layout.contentY+220,layout.settingsWidth-24,16)){draggingSlider=1;setSliderValue(1,mx);return true;}
+            if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+8,layout.contentY+244,layout.settingsWidth-16,34)){
+                Theme.Preset[] presets=Theme.Preset.values();
+                Theme.select(presets[(Theme.selected().ordinal()+1)%presets.length]);
+                ModConfig.accentTheme=Theme.selected().ordinal();ModConfig.save();return true;
+            }
             if(button==0&&!layout.compact&&selectedFeature>=0&&selectedFeature<visibleFeatures.size()){
                 int sx=layout.settingsX+layout.settingsWidth-58,sy=layout.contentY+110;
                 if(inside(mx,my,sx,sy,40,20)){
@@ -204,6 +242,16 @@ public final class BlackCloverScreen extends Screen {
             return true;
         }
         return super.mouseScrolled(mouseX,mouseY,horizontalAmount,verticalAmount);
+    }
+
+    @Override public boolean mouseDragged(double mouseX,double mouseY,int button,double deltaX,double deltaY){
+        if(button==0&&draggingSlider>=0){setSliderValue(draggingSlider,mouseX);return true;}
+        return super.mouseDragged(mouseX,mouseY,button,deltaX,deltaY);
+    }
+
+    @Override public boolean mouseReleased(double mouseX,double mouseY,int button){
+        if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}
+        return super.mouseReleased(mouseX,mouseY,button);
     }
 
     @Override public boolean keyPressed(int keyCode,int scanCode,int modifiers){
