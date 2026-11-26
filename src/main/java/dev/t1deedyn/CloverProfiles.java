@@ -78,6 +78,19 @@ public final class CloverProfiles {
         }
     }
 
+    public static boolean rename(String oldName, String newName) {
+        Path source = profilePath(oldName);
+        Path target = profilePath(newName);
+        if (source == null || target == null || !Files.isRegularFile(source) || Files.exists(target)) return false;
+        try {
+            Files.move(source, target);
+            return true;
+        } catch (Exception exception) {
+            T1deedynClient.LOGGER.warn("Could not rename Black Clover profile {} to {}", oldName, newName, exception);
+            return false;
+        }
+    }
+
     public static boolean delete(String name) {
         Path file = profilePath(name);
         if (file == null) return false;
