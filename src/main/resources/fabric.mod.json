@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "t1deedyn",
+  "version": "${version}",
+  "name": "T1deedyn",
+  "description": "A polished client-side visual menu for Minecraft.",
+  "authors": ["T1deedyn"],
+  "contact": { "sources": "https://github.com/antikzurtov-maker/T1deedyn" },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.t1deedyn.T1deedynClient"] },
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": "1.21.0",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
