@@ -22,7 +22,9 @@ public final class T1deedynScreen extends Screen {
         private final ScrollPanel scrollPanel = new ScrollPanel();
     private final ModuleCard autoBerryCard = new ModuleCard();
     private boolean awaitingBerryKey;
-    private static final int BERRY_BODY_HEIGHT = 520;
+    private static final int BERRY_BODY_HEIGHT = 620;
+    private boolean pendingCardHeader;
+    private boolean pendingCardToggle;
     private long lastFrameNanos = System.nanoTime();
     private boolean contentDragConsumed;
     private Integer previousMenuBlur;
@@ -350,7 +352,7 @@ public final class T1deedynScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if(button==1&&selectedTab==3){int cx=left+158,cr=left+panelWidth-22,cy=top+70-scrollPanel.offset();if(mx>=cx&&mx<=cr&&my>=cy&&my<=cy+40){AutoBerry.toggle();return true;}}
+        if(button==1&&selectedTab==3){int cx=left+158,cr=left+panelWidth-22,cy=top+70-scrollPanel.offset();if(mx>=cx&&mx<=cr&&my>=cy&&my<=cy+40){pendingCardHeader=true;pendingCardToggle=true;return true;}}
         if (button != 0) return super.mouseClicked(mx, my, button);
         if (mx >= left + 145 && mx <= left + panelWidth - 10 && my >= top + 65 && my <= top + panelHeight - 38) scrollPanel.mouseDown(mx, my);
         if (mx >= left && mx <= left + panelWidth && my >= top && my <= top + 48) {
@@ -384,14 +386,12 @@ public final class T1deedynScreen extends Screen {
         }
         if(selectedTab==3){
             int cy=top+70-scrollPanel.offset();
-            if(mx>=x&&mx<=right&&my>=cy&&my<=cy+40){
-                if(mx>=right-70){AutoBerry.toggle();return true;}
-                autoBerryCard.toggle();return true;
-            }
+            if(mx>=x&&mx<=right&&my>=cy&&my<=cy+40){pendingCardHeader=true;pendingCardToggle=mx>=right-70;return true;}
             if(autoBerryCard.isExpanded()&&mx>=x&&mx<=right&&my>cy+40&&my<cy+40+BERRY_BODY_HEIGHT){
                 int ry=(int)my+scrollPanel.offset()-(top+70+48);
-                int[] rowY={20,46,70,96,122,148,168,192,216,236,260,284,308,332,352,376,400,424,448,476};
-                int hit=-1;for(int i=0;i<rowY.length-1;i++)if(ry>=rowY[i]&&ry<rowY[i+1]){hit=i;break;}
+                int[] rowStart={20,46,70,96,122,148,194,218,242,286,310,334,358,382,426,450,474,498,522,550};
+                int[] rowEnd={46,70,96,122,148,174,218,242,266,310,334,358,382,406,450,474,498,522,550,580};
+                int hit=-1;for(int i=0;i<rowStart.length;i++)if(ry>=rowStart[i]&&ry<rowEnd[i]){hit=i;break;}
                 if(hit==0||hit==2||hit==3||hit==4||hit==5){activeSlider=10+hit;sliderDragging=true;setBerrySlider(hit,mx);return true;}
                 if(hit==1||hit==6||hit==7||hit==8||hit==9||hit==10||hit==11||hit==12||hit==13||hit==14||hit==15||hit==16||hit==17){toggleBerryOption(hit);return true;}
                 if(hit==18){awaitingBerryKey=true;return true;}
@@ -432,7 +432,8 @@ public final class T1deedynScreen extends Screen {
     @Override public boolean mouseReleased(double mx, double my, int button) {
         if (button == 0) {
             dragging = false; sliderDragging = false; activeSlider = -1;
-            boolean consumed = contentDragConsumed; contentDragConsumed = false; scrollPanel.mouseUp();
+            boolean consumed = contentDragConsumed || scrollPanel.consumedClick(); contentDragConsumed = false; scrollPanel.mouseUp();
+            if(pendingCardHeader){if(!consumed){if(pendingCardToggle)AutoBerry.toggle();else autoBerryCard.toggle();}pendingCardHeader=false;pendingCardToggle=false;return true;}
             if (consumed) return true;
         }
         return super.mouseReleased(mx, my, button);
