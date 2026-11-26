@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ModConfig {
-    private static final int CONFIG_VERSION = 2;
+    private static final int CONFIG_VERSION = 3;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -21,11 +21,10 @@ public final class ModConfig {
     public static boolean menuAnimations = true;
     public static final int uiScale = 1;
     public static double menuOpacity = 0.94;
-    public static double backgroundDim = 0.35;
+    public static double backgroundDim = 0.25;
     public static int accentTheme = 0;
     public static boolean skyVisual = true;
     public static boolean rgbLighting = true;
-    public static boolean menuBlur = false;
     public static boolean showFps = true;
     public static boolean showPing = true;
     public static boolean showHudCoordinates = true;
@@ -40,10 +39,10 @@ public final class ModConfig {
     public static boolean autoBerrySweet = true;
     public static boolean autoBerryGlow = true;
     public static boolean autoBerryStageTwo = false;
-    public static int autoBerryClickDelay = 3;
-    public static int autoBerryRandomDelay = 1;
-    public static int autoBerryMaxCps = 5;
-    public static int autoBerryScanTicks = 5;
+    public static int autoBerryClickDelay = 0;
+    public static int autoBerryRandomDelay = 0;
+    public static int autoBerryMaxCps = 20;
+    public static int autoBerryScanTicks = 1;
     public static boolean autoBerryOnlyStationary = false;
     public static boolean autoBerryPauseWithScreen = true;
     public static boolean autoBerryPauseUsingItem = true;
@@ -75,7 +74,6 @@ public final class ModConfig {
             accentTheme = clampInt(integer(j, "accentTheme", 0), 0, 2);
             skyVisual = bool(j, "skyVisual", skyVisual);
             rgbLighting = bool(j, "rgbLighting", rgbLighting);
-            menuBlur = bool(j, "menuBlur", false);
             showFps = bool(j, "showFps", true);
             showPing = bool(j, "showPing", true);
             showHudCoordinates = bool(j, "showHudCoordinates", true);
@@ -89,10 +87,10 @@ public final class ModConfig {
             autoBerrySweet = bool(j, "autoBerrySweet", true);
             autoBerryGlow = bool(j, "autoBerryGlow", true);
             autoBerryStageTwo = bool(j, "autoBerryStageTwo", false);
-            autoBerryClickDelay = clampInt(integer(j, "autoBerryClickDelay", 3), 1, 20);
-            autoBerryRandomDelay = clampInt(integer(j, "autoBerryRandomDelay", 1), 0, 5);
-            autoBerryMaxCps = clampInt(integer(j, "autoBerryMaxCps", 5), 1, 10);
-            autoBerryScanTicks = clampInt(integer(j, "autoBerryScanTicks", 5), 1, 20);
+            autoBerryClickDelay = clampInt(integer(j, "autoBerryClickDelay", 0), 0, 20);
+            autoBerryRandomDelay = clampInt(integer(j, "autoBerryRandomDelay", 0), 0, 5);
+            autoBerryMaxCps = clampInt(integer(j, "autoBerryMaxCps", 20), 1, 20);
+            autoBerryScanTicks = clampInt(integer(j, "autoBerryScanTicks", 1), 1, 20);
             autoBerryOnlyStationary = bool(j, "autoBerryOnlyStationary", false);
             autoBerryPauseWithScreen = bool(j, "autoBerryPauseWithScreen", true);
             autoBerryPauseUsingItem = bool(j, "autoBerryPauseUsingItem", true);
@@ -125,7 +123,6 @@ public final class ModConfig {
         j.addProperty("accentTheme", accentTheme);
         j.addProperty("skyVisual", skyVisual);
         j.addProperty("rgbLighting", rgbLighting);
-        j.addProperty("menuBlur", menuBlur);
         j.addProperty("showFps", showFps);
         j.addProperty("showPing", showPing);
         j.addProperty("showHudCoordinates", showHudCoordinates);
