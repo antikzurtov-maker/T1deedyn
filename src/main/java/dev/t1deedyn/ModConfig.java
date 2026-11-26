@@ -19,6 +19,9 @@ public final class ModConfig {
     public static double menuOpacity = 0.94;
     public static double backgroundDim = 0.48;
     public static int accentTheme = 0;
+    public static boolean skyVisual = true;
+    public static boolean rgbLighting = true;
+    public static boolean cursorTrail = true;
 
     private ModConfig() {}
 
@@ -37,6 +40,9 @@ public final class ModConfig {
             menuOpacity = clamp(parse(p, "menuOpacity", 0.94), 0.72, 1.0);
             backgroundDim = clamp(parse(p, "backgroundDim", 0.48), 0.0, 0.75);
             accentTheme = Math.max(0, Math.min(2, Integer.parseInt(p.getProperty("accentTheme", "0"))));
+            skyVisual = Boolean.parseBoolean(p.getProperty("skyVisual", "true"));
+            rgbLighting = Boolean.parseBoolean(p.getProperty("rgbLighting", "true"));
+            cursorTrail = Boolean.parseBoolean(p.getProperty("cursorTrail", "true"));
         } catch (IOException | NumberFormatException ignored) { }
     }
 
@@ -60,6 +66,9 @@ public final class ModConfig {
         p.setProperty("menuOpacity", Double.toString(menuOpacity));
         p.setProperty("backgroundDim", Double.toString(backgroundDim));
         p.setProperty("accentTheme", Integer.toString(accentTheme));
+        p.setProperty("skyVisual", Boolean.toString(skyVisual));
+        p.setProperty("rgbLighting", Boolean.toString(rgbLighting));
+        p.setProperty("cursorTrail", Boolean.toString(cursorTrail));
         try {
             Files.createDirectories(FILE.getParent());
             try (OutputStream out = Files.newOutputStream(FILE)) { p.store(out, "T1deedyn settings"); }
