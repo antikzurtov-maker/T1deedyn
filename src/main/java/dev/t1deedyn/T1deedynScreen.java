@@ -396,7 +396,7 @@ public final class T1deedynScreen extends Screen {
             }
         }
         if (selectedTab == 3 && mx >= x && mx <= right && my >= top + 66 && my <= top + panelHeight - 25) {
-            int row = gameScroll + (int)((my - (top + 66)) / 22.0);
+            int row = (int)((my - (top + 69)) / 22.0) + scrollPanel.offset() / 22;
             if (row >= 0 && row < 20) { changeGameSetting(row); return true; }
         }
         if (selectedTab == 5 && my >= top + 110 && my <= top + 158) {
