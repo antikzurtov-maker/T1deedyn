@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ModConfig {
+    public static final String BUILD_VERSION = "0.3.0";
     private static final int CONFIG_VERSION = 5;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
