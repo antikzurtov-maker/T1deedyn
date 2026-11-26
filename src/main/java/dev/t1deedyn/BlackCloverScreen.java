@@ -33,7 +33,10 @@ public final class BlackCloverScreen extends Screen {
     public BlackCloverScreen(){super(Text.literal("Чёрный Клевер"));}
     @Override protected void init(){layout=new UiLayout(width,height);refreshFeatures();}
     @Override public boolean shouldPause(){return false;}
-    @Override public void renderBackground(DrawContext c,int mouseX,int mouseY,float delta){c.fill(0,0,width,height,0x59000000);}
+    @Override public void renderBackground(DrawContext c,int mouseX,int mouseY,float delta){
+        int alpha=(int)Math.round(Math.max(0.0,Math.min(0.75,ModConfig.backgroundDim))*255.0);
+        c.fill(0,0,width,height,(alpha<<24));
+    }
 
     private void refreshFeatures(){
         visibleFeatures.clear();
