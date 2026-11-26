@@ -109,8 +109,7 @@ public final class T1deedynScreen extends Screen {
                 toggle(c, x, py + 188, contentRight, "Плавная камера", ModConfig.smoothCamera);
                 toggle(c, x, py + 228, contentRight, "Ночное небо / звёзды", ModConfig.skyVisual);
                 toggle(c, x, py + 268, contentRight, "RGB-подсветка", ModConfig.rgbLighting);
-                toggle(c, x, py + 308, contentRight, "RGB-хвост курсора", ModConfig.cursorTrail);
-            }
+                }
             case 2 -> {
                 toggle(c, x, py + 88, contentRight, "Чистый HUD", ModConfig.cleanHud);
                 toggle(c, x, py + 132, contentRight, "Показывать координаты", ModConfig.showCoordinates);
@@ -130,7 +129,7 @@ public final class T1deedynScreen extends Screen {
             }
             case 5 -> {
                 c.drawText(textRenderer, "Масштаб меню", x, py + 82, TEXT, false);
-                slider(c, x, py + 108, contentRight, ModConfig.uiScale, 0.80, 1.15, 0);
+                c.drawText(textRenderer, "1x (целый масштаб)", x, py + 108, MUTED, false);
                 c.drawText(textRenderer, "Непрозрачность панели", x, py + 151, TEXT, false);
                 slider(c, x, py + 177, contentRight, ModConfig.menuOpacity, 0.72, 1.0, 1);
                 c.drawText(textRenderer, "Затемнение мира", x, py + 220, TEXT, false);
@@ -148,7 +147,6 @@ public final class T1deedynScreen extends Screen {
 
         c.drawText(textRenderer, "T1deedyn  •  build 0.3.0", x, py + panelHeight - 15, MUTED, false);
         if (selectedTab == 1 && ModConfig.particles) drawParticles(c, mouseX, mouseY);
-        if (ModConfig.cursorTrail) drawCursorTrail(c, mouseX, mouseY);
         super.render(c, mouseX, mouseY, delta);
     }
 
@@ -163,16 +161,6 @@ public final class T1deedynScreen extends Screen {
             int sy=y1+12+(i*31)%(Math.max(1,y2-y1-24));
             int a=120+(int)((Math.sin((t+i)*0.12)+1)*60);
             c.fill(sx,sy,sx+2,sy+2,(a<<24)|0x00DDE8FF);
-        }
-    }
-
-    private void drawCursorTrail(DrawContext c, int mx, int my) {
-        if (mx < left || mx > left + panelWidth || my < top || my > top + panelHeight) return;
-        long t=System.currentTimeMillis()/80L;
-        for(int i=5;i>=0;i--) {
-            int color=java.awt.Color.HSBtoRGB(((t+i*9)%60)/60.0f,0.85f,1.0f);
-            int r=Math.max(1,4-i/2);
-            c.fill(mx-i*3-r,my-i*2-r,mx-i*3+r,my-i*2+r,(0x55<<24)|(color&0x00FFFFFF));
         }
     }
 
@@ -221,7 +209,6 @@ public final class T1deedynScreen extends Screen {
         int x = left + 158;
         int end = left + panelWidth - 24;
         double f = Math.max(0.0, Math.min(1.0, (mouseX - x) / Math.max(1.0, end - x)));
-        if (activeSlider == 0) ModConfig.uiScale = 0.80 + f * 0.35;
         if (activeSlider == 1) ModConfig.menuOpacity = 0.72 + f * 0.28;
         if (activeSlider == 2) ModConfig.backgroundDim = f * 0.75;
         ModConfig.save();
@@ -251,7 +238,6 @@ public final class T1deedynScreen extends Screen {
                     if (my >= top + 182 && my <= top + 210) { ModConfig.smoothCamera = !ModConfig.smoothCamera; ModConfig.save(); return true; }
                     if (my >= top + 222 && my <= top + 250) { ModConfig.skyVisual = !ModConfig.skyVisual; ModConfig.save(); return true; }
                     if (my >= top + 262 && my <= top + 290) { ModConfig.rgbLighting = !ModConfig.rgbLighting; ModConfig.save(); return true; }
-                    if (my >= top + 302 && my <= top + 330) { ModConfig.cursorTrail = !ModConfig.cursorTrail; ModConfig.save(); return true; }
                 }
                 if (selectedTab == 2) {
                     if (my >= top + 82 && my <= top + 112) { ModConfig.cleanHud = !ModConfig.cleanHud; ModConfig.save(); return true; }
@@ -268,8 +254,7 @@ public final class T1deedynScreen extends Screen {
             ModConfig.save(); return true;
         }
         if (selectedTab == 5) {
-            if (my >= top + 98 && my <= top + 122) activeSlider = 0;
-            else if (my >= top + 167 && my <= top + 191) activeSlider = 1;
+            if (my >= top + 167 && my <= top + 191) activeSlider = 1;
             else if (my >= top + 236 && my <= top + 260) activeSlider = 2;
             if (activeSlider >= 0) { sliderDragging = true; setSlider(mx); return true; }
         }
