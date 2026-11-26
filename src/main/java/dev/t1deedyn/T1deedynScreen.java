@@ -117,7 +117,7 @@ public final class T1deedynScreen extends Screen {
                 toggle(c, x, py + 132, contentRight, "Показывать координаты", ModConfig.showCoordinates);
                 c.drawText(textRenderer, "Переключатели HUD пока сохраняют настройки.", x, py + 190, MUTED, false);
             }
-            case 3 -> drawGameSettings(c, x, py, contentRight);
+            case 3 -> drawGameSettings(c, x, py, contentRight, mouseX, mouseY);
             case 4 -> {
                 toggle(c, x, py + 88, contentRight, "Анимация открытия", ModConfig.menuAnimations);
                 c.drawText(textRenderer, "Плавное появление и смещение панели.", x, py + 111, MUTED, false);
@@ -154,7 +154,7 @@ public final class T1deedynScreen extends Screen {
     }
 
 
-    private void drawGameSettings(DrawContext c, int x, int py, int right) {
+    private void drawGameSettings(DrawContext c, int x, int py, int right, int mouseX, int mouseY) {
         c.drawText(textRenderer, "AutoBerry  •  V — вкл/выкл", x, py + 51, MUTED, false);
         for (int i = 0; i < 12; i++) {
             int index = gameScroll + i;
@@ -165,7 +165,33 @@ public final class T1deedynScreen extends Screen {
             String value = gameSettingValue(index);
             c.drawText(textRenderer, value, right - textRenderer.getWidth(value), y, accent(), false);
         }
-        c.drawText(textRenderer, "Колесо мыши: прокрутка  •  нажми строку для изменения", x, py + panelHeight - 28, MUTED, false);
+        int hovered = gameScroll + (int)((mouseY - (py + 69)) / 22.0);
+        String hint = mouseX >= x && mouseX <= right && hovered >= gameScroll && hovered < Math.min(20, gameScroll + 12) ? gameSettingHint(hovered) : "Колесо мыши: прокрутка  •  нажми строку для изменения";
+        c.drawText(textRenderer, hint, x, py + panelHeight - 28, MUTED, false);
+    }
+    private String gameSettingHint(int i) {
+        return switch (i) {
+            case 0 -> "Автосбор включается отдельно; V переключает функцию.";
+            case 1 -> "Радиус от глаз игрока: 1.0–5.0 блока, шаг 0.5.";
+            case 2 -> "Радиус ограничивается атрибутом дальности + небольшой запас.";
+            case 3 -> "Собирать обычные кусты сладких ягод.";
+            case 4 -> "Собирать светящиеся пещерные лозы с ягодами.";
+            case 5 -> "Вторая стадия даёт меньше ягод, чем полностью спелый куст.";
+            case 6 -> "Базовая пауза между ПКМ в игровых тиках.";
+            case 7 -> "К базовой задержке добавляется случайное число от 0 до N.";
+            case 8 -> "Жёсткий предел числа кликов за одну секунду.";
+            case 9 -> "Как часто искать новые кусты. Больше тиков = меньше нагрузка.";
+            case 10 -> "Пока игрок движется, клики и поиск целей приостанавливаются.";
+            case 11 -> "Пауза в инвентаре, чате и любом другом открытом экране.";
+            case 12 -> "Не собирать во время еды, натягивания лука или блокирования.";
+            case 13 -> "Не кликает с костной мукой, блоками, ведрами и метаемыми предметами.";
+            case 14 -> "Проигрывать обычную анимацию взмаха главной руки.";
+            case 15 -> "Ванильный звук сбора остаётся; настройка для доп. звуков мода.";
+            case 16 -> "Добавлять частицу на месте успешно обработанного куста.";
+            case 17 -> "Показывать счётчик собранных кустов на HUD.";
+            case 18 -> "Редкая частица рядом с созревшими кустами, без шейдеров.";
+            default -> "Проверять лучом, что между глазами и кустом нет блоков.";
+        };
     }
     private String gameSettingName(int i) {
         return switch (i) {
