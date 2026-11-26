@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 public final class ModConfig {
     public static final String BUILD_VERSION = "0.3.0";
-    private static final int CONFIG_VERSION = 5;
+    private static final int CONFIG_VERSION = 6;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -36,16 +36,17 @@ public final class ModConfig {
     public static int particleLimit = 24;
 
     public static boolean autoBerryEnabled = false;
-    public static int autoBerryToggleKey = 86;
-    public static double autoBerryRadius = 5.0;
-    public static boolean autoBerryLimitReach = false;
+    public static int autoBerryToggleKey = -1;
+    public static boolean autoBerryAccordion = false;
+    public static double autoBerryRadius = 3.0;
+    public static boolean autoBerryLimitReach = true;
     public static boolean autoBerrySweet = true;
     public static boolean autoBerryGlow = true;
     public static boolean autoBerryStageTwo = false;
-    public static int autoBerryClickDelay = 0;
-    public static int autoBerryRandomDelay = 0;
-    public static int autoBerryMaxCps = 20;
-    public static int autoBerryScanTicks = 1;
+    public static int autoBerryClickDelay = 3;
+    public static int autoBerryRandomDelay = 1;
+    public static int autoBerryMaxCps = 5;
+    public static int autoBerryScanTicks = 5;
     public static boolean autoBerryOnlyStationary = false;
     public static boolean autoBerryPauseWithScreen = true;
     public static boolean autoBerryPauseUsingItem = true;
@@ -87,16 +88,17 @@ public final class ModConfig {
             particleLimit = clampInt(integer(j, "particleLimit", 24), 0, 128);
             int loadedVersion = integer(j, "configVersion", 0);
             autoBerryEnabled = bool(j, "autoBerryEnabled", false);
-            autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", 86), 32, 348);
+            autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", -1), -1, 348);
+            autoBerryAccordion = bool(j, "autoBerryAccordion", false);
             autoBerryRadius = clamp(number(j, "autoBerryRadius", 3.0), 1.0, 5.0);
             autoBerryLimitReach = bool(j, "autoBerryLimitReach", true);
             autoBerrySweet = bool(j, "autoBerrySweet", true);
             autoBerryGlow = bool(j, "autoBerryGlow", true);
             autoBerryStageTwo = bool(j, "autoBerryStageTwo", false);
-            autoBerryClickDelay = clampInt(integer(j, "autoBerryClickDelay", 0), 0, 20);
-            autoBerryRandomDelay = clampInt(integer(j, "autoBerryRandomDelay", 0), 0, 5);
-            autoBerryMaxCps = clampInt(integer(j, "autoBerryMaxCps", 20), 1, 20);
-            autoBerryScanTicks = clampInt(integer(j, "autoBerryScanTicks", 1), 1, 20);
+            autoBerryClickDelay = clampInt(integer(j, "autoBerryClickDelay", 3), 1, 20);
+            autoBerryRandomDelay = clampInt(integer(j, "autoBerryRandomDelay", 1), 0, 5);
+            autoBerryMaxCps = clampInt(integer(j, "autoBerryMaxCps", 5), 1, 10);
+            autoBerryScanTicks = clampInt(integer(j, "autoBerryScanTicks", 5), 1, 20);
             autoBerryOnlyStationary = bool(j, "autoBerryOnlyStationary", false);
             autoBerryPauseWithScreen = bool(j, "autoBerryPauseWithScreen", true);
             autoBerryPauseUsingItem = bool(j, "autoBerryPauseUsingItem", true);
@@ -143,6 +145,7 @@ public final class ModConfig {
         j.addProperty("particleLimit", particleLimit);
         j.addProperty("autoBerryEnabled", autoBerryEnabled);
         j.addProperty("autoBerryToggleKey", autoBerryToggleKey);
+        j.addProperty("autoBerryAccordion", autoBerryAccordion);
         j.addProperty("autoBerryRadius", autoBerryRadius);
         j.addProperty("autoBerryLimitReach", autoBerryLimitReach);
         j.addProperty("autoBerrySweet", autoBerrySweet);
