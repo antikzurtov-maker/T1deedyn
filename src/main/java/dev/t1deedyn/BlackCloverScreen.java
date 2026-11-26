@@ -29,6 +29,7 @@ public final class BlackCloverScreen extends Screen {
     private int draggingSlider=-1, animationTicks, hoverRow=-1;
     private int lastWidth=-1,lastHeight=-1;
     private int rightContentHeight;
+    private int profileMenuX, themeMenuX;
     private final double previousScale;
     private boolean scaleRestored;
 
@@ -198,6 +199,8 @@ public final class BlackCloverScreen extends Screen {
         int remaining=controlRight-controlsX;
         if(remaining>=58){
             int pw=Math.min(118,remaining/2-3);
+            profileMenuX=controlsX;
+            themeMenuX=controlsX+pw+5;
             RoundedRect.border(c,controlsX,top+5,pw,26,6,1,Theme.BORDER,Theme.CARD);
             CloverMark.draw(c,controlsX+5,top+11,13,Theme.accentColor());
             if(pw>=88)drawText(c,"Профиль 1",controlsX+23,top+13,Theme.TEXT,pw-39);
@@ -348,13 +351,13 @@ public final class BlackCloverScreen extends Screen {
         for(int i=0;i<4;i++){int bx=mx+12+i*(buttonW+2);RoundedRect.fill(c,bx,by,buttonW,23,6,Theme.CARD_HOVER);drawCentered(c,labels[i],bx+buttonW/2,by+7,i==3?Theme.DANGER:Theme.TEXT);}
     }
     private void renderThemeDropdown(DrawContext c){
-        int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48,w=112;
+        int x=themeMenuX,y=layout.y+48,w=112;
         RoundedRect.border(c,x,y,w,100,7,1,Theme.BORDER,Theme.PANEL);
         Theme.Preset[] p=Theme.Preset.values();
         for(int i=0;i<p.length;i++)c.drawText(textRenderer,p[i].name(),x+8,y+8+i*18,p[i]==Theme.selected()?Theme.accentColor():Theme.TEXT_DIM,false);
     }
     private void renderProfileDropdown(DrawContext c){
-        int x=layout.centerX+110,y=layout.y+48;
+        int x=profileMenuX,y=layout.y+48;
         RoundedRect.border(c,x,y,130,86,7,1,Theme.BORDER,Theme.PANEL);
         c.drawText(textRenderer,"Профиль 1",x+8,y+8,Theme.TEXT,false);
         c.drawText(textRenderer,"Новый профиль",x+8,y+26,Theme.TEXT_DIM,false);
@@ -398,9 +401,9 @@ public final class BlackCloverScreen extends Screen {
             if(inside(mx,my,right-60,top+3,26,26)){close();return true;}
             int searchW=Math.max(90,Math.min((right-layout.centerX)/3,(right-layout.centerX)-160));
             if(inside(mx,my,layout.centerX+6,top+5,Math.max(90,searchW),26)){searchFocused=true;return true;}
-            int profileX=layout.centerX+searchW+18;
+            int profileX=profileMenuX;
             if(inside(mx,my,profileX,top+5,118,26)){profileDropdown=true;return true;}
-            if(inside(mx,my,profileX+122,top+5,90,26)){themeDropdown=true;return true;}
+            if(inside(mx,my,themeMenuX,top+5,Math.max(30,right-30-themeMenuX-8),26)){themeDropdown=true;return true;}
             int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
             if(inside(mx,my,vx,vy,vw,vh)){
                 int idx=(int)((my-vy+scrollOffset)/ROW_HEIGHT);
