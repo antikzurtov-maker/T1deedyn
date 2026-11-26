@@ -126,7 +126,7 @@ public final class T1deedynScreen extends Screen {
         int contentRight = left + panelWidth - 22;
         int viewportY = py + 66;
         int viewportH = Math.max(32, panelHeight - 104);
-        int contentH = switch (selectedTab) { case 1 -> 230; case 2 -> 170; case 3 -> 69 + 20 * 22 + 20; case 4 -> 150; case 5 -> 220; case 6 -> 300; default -> 230; };
+        int contentH = switch (selectedTab) { case 1 -> 230; case 2 -> 170; case 3 -> 69 + 20 * 22 + 20; case 4 -> 150; case 5 -> 220; case 6 -> 300; default -> 300; };
         scrollPanel.layout(selectedTab, x - 8, viewportY, contentRight - x + 16, viewportH, contentH);
         long frameNow = System.nanoTime();
         scrollPanel.tick(Math.min(0.1, (frameNow - lastFrameNanos) / 1_000_000_000.0));
@@ -186,15 +186,15 @@ public final class T1deedynScreen extends Screen {
                 c.drawText(textRenderer, "Добро пожаловать!", x, py + 88, TEXT, false);
                 c.drawText(textRenderer, "Меню открывается и закрывается клавишей X.", x, py + 112, MUTED, false);
                 c.drawText(textRenderer, "Настрой внешний вид во вкладке «Настройки».", x, py + 136, MUTED, false);
-                rounded(c, x, py + 84, contentRight, py + 140, 9, Theme.get(accent()).panelTint);
-                c.drawBorder(x, py + 84, contentRight - x, 56, Theme.get(accent()).accentDim);
-                c.drawText(textRenderer, "СОЗДАТЕЛИ", x + 12, py + 91, MUTED, false);
-                rounded(c, x + 12, py + 108, x + 30, py + 126, 4, accent());
-                c.drawText(textRenderer, "T1deedyn", x + 38, py + 111, Theme.get(accent()).accentBright, false);
-                c.drawText(textRenderer, "&", x + 108, py + 111, 0x99AAA5B8, false);
-                c.drawText(textRenderer, "PvE_BoTiK", x + 123, py + 111, Theme.get(accent()).accentBright, false);
-                rounded(c, x, py + 152, x + 205, py + 198, 9, 0xFF282333);
-                c.drawText(textRenderer, "T1  •  CUSTOM VISUALS", x + 14, py + 169, accent(), false);
+                rounded(c, x, py + 166, contentRight, py + 222, 9, Theme.get(accent()).panelTint);
+                c.drawBorder(x, py + 166, contentRight - x, 56, Theme.get(accent()).accentDim);
+                c.drawText(textRenderer, "СОЗДАТЕЛИ", x + 12, py + 173, MUTED, false);
+                rounded(c, x + 12, py + 190, x + 30, py + 208, 4, accent());
+                c.drawText(textRenderer, "T1deedyn", x + 38, py + 193, Theme.get(accent()).accentBright, false);
+                c.drawText(textRenderer, "&", x + 108, py + 193, 0x99AAA5B8, false);
+                c.drawText(textRenderer, "PvE_BoTiK", x + 123, py + 193, Theme.get(accent()).accentBright, false);
+                rounded(c, x, py + 234, x + 205, py + 280, 9, 0xFF282333);
+                c.drawText(textRenderer, "T1  •  CUSTOM VISUALS", x + 14, py + 251, accent(), false);
             }
         }
 
@@ -419,6 +419,7 @@ public final class T1deedynScreen extends Screen {
     }
 
     @Override public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (sliderDragging && button == 0) { setSlider(mx); return true; }
         if (button == 0 && scrollPanel.mouseMove(mx, my)) { contentDragConsumed = true; return true; }
         if (dragging && button == 0) {
             left = Math.max(0, Math.min(width - panelWidth, (int)Math.round(mx - dragOffsetX)));
