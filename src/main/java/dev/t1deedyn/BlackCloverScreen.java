@@ -30,6 +30,9 @@ public final class BlackCloverScreen extends Screen {
     private int hoverRow=-1;
     private int draggingSlider=-1;
     private int animationTicks;
+    private boolean profileModal;
+    private String profileName="main";
+    private String selectedProfile="";
 
     public BlackCloverScreen(){super(Text.literal("Чёрный Клевер"));}
     @Override protected void init(){layout=new UiLayout(width,height);refreshFeatures();}
@@ -156,6 +159,32 @@ public final class BlackCloverScreen extends Screen {
         RoundedRect.border(c,tagX,tagY,tagW,22,8,1,bright,Theme.PANEL);
         CloverMark.draw(c,tagX+6,tagY+4,14,accent);
         c.drawText(textRenderer,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,bright,false);
+        if(profileModal)renderProfileModal(c);
+    }
+
+    private void renderProfileModal(DrawContext c){
+        int mw=Math.min(330,width-24),mh=206,mx=(width-mw)/2,my=(height-mh)/2;
+        c.fill(0,0,width,height,0x99000000);
+        RoundedRect.border(c,mx,my,mw,mh,12,1,Theme.brightAccentColor(),Theme.PANEL);
+        drawCentered(c,"ПРОФИЛИ",width/2,my+12,Theme.brightAccentColor());
+        RoundedRect.fill(c,mx+12,my+34,mw-24,24,6,Theme.CARD);
+        c.drawText(textRenderer,profileName.isEmpty()?"Имя профиля...":profileName,mx+20,my+42,Theme.TEXT,false);
+        List<String> profiles=CloverProfiles.list();
+        int rowY=my+66;
+        for(int i=0;i<Math.min(4,profiles.size());i++){
+            String name=profiles.get(i);
+            boolean selected=name.equals(selectedProfile);
+            if(selected)RoundedRect.fill(c,mx+12,rowY+i*21,mw-24,19,5,Theme.CARD_HOVER);
+            c.drawText(textRenderer,name,mx+20,rowY+5+i*21,selected?Theme.brightAccentColor():Theme.TEXT_DIM,false);
+        }
+        int by=my+mh-34;
+        RoundedRect.fill(c,mx+12,by,88,23,6,Theme.CARD_HOVER);
+        RoundedRect.fill(c,mx+106,by,88,23,6,Theme.CARD_HOVER);
+        RoundedRect.fill(c,mx+200,by,Math.max(60,mw-212),23,6,Theme.CARD_HOVER);
+        drawCentered(c,"Сохранить",mx+56,by+7,Theme.TEXT);
+        drawCentered(c,"Загрузить",mx+150,by+7,Theme.TEXT);
+        drawCentered(c,"Удалить",mx+200+(Math.max(60,mw-212))/2,by+7,Theme.TEXT);
+        c.drawText(textRenderer,"ESC: закрыть",mx+12,my+mh-51,Theme.TEXT_DIM,false);
     }
 
     private void renderAtmosphere(DrawContext c){
@@ -230,8 +259,19 @@ public final class BlackCloverScreen extends Screen {
             if(button==0&&inside(mx,my,right-66,topY+4,28,28)){minimized=true;close();return true;}
             if(button==0&&inside(mx,my,right-34,topY+4,28,28)){close();return true;}
             int searchW=Math.max(70,(right-layout.centerX)/3);
+            if(profileModal&&button==0){
+                int mw=Math.min(330,width-24),mh=206,mx0=(width-mw)/2,my0=(height-mh)/2,by=my0+mh-34;
+                if(inside(mx,my,mx0+12,my0+34,mw-24,24)){searchFocused=false;return true;}
+                List<String> profiles=CloverProfiles.list();
+                for(int i=0;i<Math.min(4,profiles.size());i++)if(inside(mx,my,mx0+12,my0+66+i*21,mw-24,19)){selectedProfile=profiles.get(i);profileName=selectedProfile;return true;}
+                if(inside(mx,my,mx0+12,by,88,23)){if(CloverProfiles.save(profileName))selectedProfile=profileName.trim().toLowerCase(java.util.Locale.ROOT);return true;}
+                if(inside(mx,my,mx0+106,by,88,23)){if(!selectedProfile.isEmpty())CloverProfiles.load(selectedProfile);profileModal=false;return true;}
+                if(inside(mx,my,mx0+200,by,Math.max(60,mw-212),23)){if(!selectedProfile.isEmpty()){CloverProfiles.delete(selectedProfile);selectedProfile="";}return true;}
+                return true;
+            }
             if(button==0&&inside(mx,my,layout.centerX+7,topY+5,searchW,26)){searchFocused=true;return true;}
             int controlsX=layout.centerX+searchW+18;
+            if(button==0&&right-layout.centerX>330&&inside(mx,my,controlsX,topY+4,90,28)){profileModal=true;searchFocused=false;return true;}
             if(button==0&&right-layout.centerX>440
                     &&inside(mx,my,Math.min(right-110,controlsX+90),topY+4,76,28)){
                 cycleTheme();
@@ -291,6 +331,11 @@ public final class BlackCloverScreen extends Screen {
     }
 
     @Override public boolean keyPressed(int keyCode,int scanCode,int modifiers){
+        if(profileModal){
+            if(keyCode==GLFW.GLFW_KEY_ESCAPE){profileModal=false;return true;}
+            if(keyCode==GLFW.GLFW_KEY_BACKSPACE&&!profileName.isEmpty()){profileName=profileName.substring(0,profileName.length()-1);return true;}
+            if(keyCode==GLFW.GLFW_KEY_ENTER){if(CloverProfiles.save(profileName))selectedProfile=profileName.trim().toLowerCase(java.util.Locale.ROOT);return true;}
+        }
         if(searchFocused){
             if(keyCode==GLFW.GLFW_KEY_ESCAPE){searchFocused=false;return true;}
             if(keyCode==GLFW.GLFW_KEY_BACKSPACE&&!search.isEmpty()){search=search.substring(0,search.length()-1);scrollOffset=0;refreshFeatures();return true;}
@@ -301,6 +346,7 @@ public final class BlackCloverScreen extends Screen {
     }
 
     @Override public boolean charTyped(char chr,int modifiers){
+        if(profileModal&&!Character.isISOControl(chr)&&profileName.length()<32){profileName+=chr;return true;}
         if(searchFocused&&!Character.isISOControl(chr)&&search.length()<48){search+=chr;scrollOffset=0;refreshFeatures();return true;}
         return super.charTyped(chr,modifiers);
     }
