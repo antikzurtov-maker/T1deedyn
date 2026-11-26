@@ -95,10 +95,13 @@ public final class BlackCloverScreen extends Screen {
     }
     @Override public void render(DrawContext c,int mouseX,int mouseY,float delta){
         if(layout==null||width!=lastWidth||height!=lastHeight){layout=new UiLayout(width,height);lastWidth=width;lastHeight=height;refreshFeatures();calculateRightContent();}
+        mouseXCache=mouseX;mouseYCache=mouseY;
         renderBackground(c,mouseX,mouseY,delta);
         renderAtmosphere(c);
         int x=layout.x,y=layout.y,w=layout.width,h=layout.height;
         int accent=Theme.accentColor(),bright=Theme.brightAccentColor();
+        c.enableScissor(0,0,width,height);
+        try{
         c.enableScissor(x,y,x+w,y+h);
         try{
             RoundedRect.fill(c,x-2,y-2,w+4,h+4,16,0x182BE36B);
@@ -107,10 +110,11 @@ public final class BlackCloverScreen extends Screen {
             renderTopbar(c,mouseX,mouseY);
             renderFeatureList(c,mouseX,mouseY);
             if(!layout.compact)renderSettings(c,mouseX,mouseY);
-            renderCreators(c);
             if(profileModal)renderProfileModal(c);
             if(themeDropdown)renderThemeDropdown(c);
             if(profileDropdown)renderProfileDropdown(c);
+        } finally {c.disableScissor();}
+        renderCreators(c);
         } finally {c.disableScissor();}
         if(ModConfig.showBounds)drawBounds(c);
     }
@@ -186,7 +190,6 @@ public final class BlackCloverScreen extends Screen {
         c.drawText(textRenderer,search.isEmpty()?TABS[selectedTab].toUpperCase(java.util.Locale.ROOT):"РЕЗУЛЬТАТЫ ПОИСКА",cx+43,cy+17,Theme.accentColor(),false);
         if(!layout.compact)drawText(c,DESCRIPTIONS[selectedTab],cx+12,cy+43,Theme.TEXT_DIM,cw-24);
         int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
-        refreshFeatures();
         hoverRow=-1;
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
