@@ -64,7 +64,7 @@ public final class BlackCloverScreen extends Screen {
         int accent=Theme.accentColor(),bright=Theme.brightAccentColor();
         RoundedRect.fill(c,x-3,y-3,w+6,h+6,17,0x182BE36B);
         RoundedRect.border(c,x,y,w,h,UiLayout.WINDOW_RADIUS,1,bright,Theme.BG);
-        RoundedRect.border(c,layout.sidebarX,y+UiLayout.GAP,layout.sidebarWidth,h-UiLayout.GAP*2,10,1,Theme.BORDER,Theme.PANEL);
+        RoundedRect.border(c,layout.sidebarX,y+UiLayout.GAP,layout.sidebarWidth,h-UiLayout.GAP*2,10,1,Theme.BORDER,surface(Theme.PANEL));
         int logoX=layout.sidebarX+(layout.sidebarWidth-64)/2;
         CloverMark.draw(c,logoX,y+22,64,accent);
         drawCentered(c,"ЧЁРНЫЙ",layout.sidebarX+layout.sidebarWidth/2,y+91,Theme.TEXT);
@@ -74,7 +74,7 @@ public final class BlackCloverScreen extends Screen {
             int ty=tabY+i*36;
             boolean hovered=inside(mouseX,mouseY,layout.sidebarX+6,ty,layout.sidebarWidth-12,32);
             if(i==selectedTab)RoundedRect.border(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,1,bright,0x702BE36B);
-            else if(hovered)RoundedRect.fill(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,Theme.CARD_HOVER);
+            else if(hovered)RoundedRect.fill(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,surface(surface(Theme.CARD)_HOVER));
             c.drawText(textRenderer,ICONS[i],layout.sidebarX+15,ty+10,i==selectedTab?Theme.TEXT:Theme.TEXT_DIM,false);
             c.drawText(textRenderer,TABS[i],layout.sidebarX+36,ty+11,i==selectedTab?Theme.TEXT:Theme.TEXT_DIM,false);
         }
@@ -185,6 +185,12 @@ public final class BlackCloverScreen extends Screen {
         drawCentered(c,"Загрузить",mx+150,by+7,Theme.TEXT);
         drawCentered(c,"Удалить",mx+200+(Math.max(60,mw-212))/2,by+7,Theme.TEXT);
         c.drawText(textRenderer,"ESC: закрыть",mx+12,my+mh-51,Theme.TEXT_DIM,false);
+    }
+
+    private int surface(int color){
+        int alpha=(color>>>24)&255;
+        int opacity=(int)Math.round(Math.max(0.72,Math.min(1.0,ModConfig.menuOpacity))*alpha);
+        return (color&0x00FFFFFF)|(opacity<<24);
     }
 
     private void renderAtmosphere(DrawContext c){
