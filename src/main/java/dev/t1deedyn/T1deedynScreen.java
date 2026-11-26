@@ -276,6 +276,14 @@ public final class T1deedynScreen extends Screen {
         switch(id){case 0->ModConfig.autoBerryRadius=1.0+Math.round(f*8.0)/2.0;case 2->ModConfig.autoBerryClickDelay=1+(int)Math.round(f*19);case 3->ModConfig.autoBerryRandomDelay=(int)Math.round(f*5);case 4->ModConfig.autoBerryMaxCps=1+(int)Math.round(f*9);case 5->ModConfig.autoBerryScanTicks=1+(int)Math.round(f*19);}
         ModConfig.save();
     }
+    private int berrySegment(DrawContext c,int x,int right,int y){
+        c.drawText(textRenderer,"Минимальная стадия",x+5,y+5,TEXT,false);
+        int sx=right-172;rounded(c,sx,y,right,y+23,6,0xFF302B39);
+        rounded(c,ModConfig.autoBerryStageTwo?sx+84:sx+2,y+2,ModConfig.autoBerryStageTwo?right-2:sx+82,y+21,5,accent());
+        c.drawText(textRenderer,"Только спелые",sx+6,y+8,ModConfig.autoBerryStageTwo?MUTED:0xFFFFFFFF,false);
+        c.drawText(textRenderer,"С 2-й стадии",sx+91,y+8,ModConfig.autoBerryStageTwo?0xFFFFFFFF:MUTED,false);
+        return y+24;
+    }
     private void toggleBerryOption(int id){
         switch(id){case 1->ModConfig.autoBerryLimitReach=!ModConfig.autoBerryLimitReach;case 6->ModConfig.autoBerrySweet=!ModConfig.autoBerrySweet;case 7->ModConfig.autoBerryGlow=!ModConfig.autoBerryGlow;case 8->ModConfig.autoBerryStageTwo=!ModConfig.autoBerryStageTwo;case 9->ModConfig.autoBerrySafeHand=!ModConfig.autoBerrySafeHand;case 10->ModConfig.autoBerryOnlyStationary=!ModConfig.autoBerryOnlyStationary;case 11->ModConfig.autoBerryPauseWithScreen=!ModConfig.autoBerryPauseWithScreen;case 12->ModConfig.autoBerryPauseUsingItem=!ModConfig.autoBerryPauseUsingItem;case 13->ModConfig.autoBerryVisibleOnly=!ModConfig.autoBerryVisibleOnly;case 14->ModConfig.autoBerrySwing=!ModConfig.autoBerrySwing;case 15->ModConfig.autoBerryParticles=!ModConfig.autoBerryParticles;case 16->ModConfig.autoBerryHighlight=!ModConfig.autoBerryHighlight;case 17->ModConfig.autoBerryCountHud=!ModConfig.autoBerryCountHud;}
         ModConfig.save();
