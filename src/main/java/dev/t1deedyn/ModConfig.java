@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ModConfig {
-    private static final int CONFIG_VERSION = 3;
+    private static final int CONFIG_VERSION = 4;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -34,8 +34,8 @@ public final class ModConfig {
 
     public static boolean autoBerryEnabled = false;
     public static int autoBerryToggleKey = 86;
-    public static double autoBerryRadius = 3.0;
-    public static boolean autoBerryLimitReach = true;
+    public static double autoBerryRadius = 5.0;
+    public static boolean autoBerryLimitReach = false;
     public static boolean autoBerrySweet = true;
     public static boolean autoBerryGlow = true;
     public static boolean autoBerryStageTwo = false;
@@ -80,6 +80,7 @@ public final class ModConfig {
             autoPerformance = bool(j, "autoPerformance", true);
             effectFps = clampInt(integer(j, "effectFps", 30), 5, 60);
             particleLimit = clampInt(integer(j, "particleLimit", 24), 0, 128);
+            int loadedVersion = integer(j, "configVersion", 0);
             autoBerryEnabled = bool(j, "autoBerryEnabled", false);
             autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", 86), 32, 348);
             autoBerryRadius = clamp(number(j, "autoBerryRadius", 3.0), 1.0, 5.0);
@@ -101,7 +102,11 @@ public final class ModConfig {
             autoBerryCountHud = bool(j, "autoBerryCountHud", true);
             autoBerryHighlight = bool(j, "autoBerryHighlight", false);
             autoBerryVisibleOnly = bool(j, "autoBerryVisibleOnly", false);
-            int loadedVersion = integer(j, "configVersion", 0);
+            // Older configs limited discovery to interaction reach, missing bushes ahead of a minecart.
+            if (loadedVersion < 4) {
+                autoBerryLimitReach = false;
+                autoBerryRadius = Math.max(autoBerryRadius, 5.0);
+            }
             if (loadedVersion != CONFIG_VERSION) save();
         } catch (Exception exception) {
             save();
