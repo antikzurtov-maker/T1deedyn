@@ -334,7 +334,8 @@ public final class AutoBerry extends VisualModule {
     }
 
     public static int getCollected() { return collected; }
-    public static boolean isEnabled() { return ModConfig.autoBerryEnabled; }
+    @Override public boolean isEnabled() { return ModConfig.autoBerryEnabled; }
+    @Override public void setEnabled(boolean enabled) { ModConfig.autoBerryEnabled = enabled; ModConfig.save(); resetWorldState(); }
 
     public static void toggle() {
         ModConfig.autoBerryEnabled = !ModConfig.autoBerryEnabled;
