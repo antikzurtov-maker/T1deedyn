@@ -150,6 +150,12 @@ public final class AutoBerry extends VisualModule {
             Vec3d eye = player.getEyePos();
             Direction face = nearestFace(target, eye);
             Vec3d hit = faceCenter(target, face);
+
+            // Search radius may exceed reach so targets are discovered early while riding.
+            // Interact only once the block is actually within the player's interaction range.
+            double reach = player.getBlockInteractionRange();
+            if (eye.squaredDistanceTo(hit) > reach * reach) return;
+
             BlockHitResult hitResult = new BlockHitResult(hit, face, target, false);
             ActionResult result = client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hitResult);
             if (result.isAccepted()) {
