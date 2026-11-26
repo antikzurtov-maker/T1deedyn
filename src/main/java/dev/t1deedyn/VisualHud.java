@@ -32,6 +32,10 @@ final class VisualHud {
                     }
                 }
             }
+            if (ModConfig.autoBerryCountHud && player != null && client.world != null) {
+                context.drawText(client.textRenderer, Text.literal("Собрано: " + AutoBerry.getCollected()), 6, y, 0xFF9FE8C2, true);
+                y += 11;
+            }
             if (ModConfig.showHudCoordinates && player != null && client.world != null) {
                 String coords = String.format(java.util.Locale.ROOT, "XYZ: %d %d %d",
                         (int)Math.floor(player.getX()), (int)Math.floor(player.getY()), (int)Math.floor(player.getZ()));
