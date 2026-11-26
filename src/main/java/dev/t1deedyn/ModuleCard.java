@@ -48,11 +48,13 @@ public final class ModuleCard {
         c.fill(knob, y + 14, knob + 12, y + 26, 0xFFF7F4FF);
         int cx = x + width - 20, cy = y + 20;
         if (progress < 0.5) {
-            c.drawHorizontalLine(cx - 4, cx, cy - 2, 0xFFD5D0E0);
-            c.drawHorizontalLine(cx - 4, cx, cy + 2, 0xFFD5D0E0);
+            c.fill(cx - 3, cy - 4, cx - 1, cy - 2, 0xFFD5D0E0);
+            c.fill(cx - 1, cy - 2, cx + 1, cy, 0xFFD5D0E0);
+            c.fill(cx + 1, cy, cx + 3, cy + 2, 0xFFD5D0E0);
         } else {
-            c.drawHorizontalLine(cx - 4, cx, cy - 2, 0xFFD5D0E0);
-            c.drawHorizontalLine(cx - 4, cx, cy + 2, 0xFFD5D0E0);
+            c.fill(cx - 3, cy + 2, cx - 1, cy + 4, 0xFFD5D0E0);
+            c.fill(cx - 1, cy, cx + 1, cy + 2, 0xFFD5D0E0);
+            c.fill(cx + 1, cy - 2, cx + 3, cy, 0xFFD5D0E0);
         }
     }
 }
