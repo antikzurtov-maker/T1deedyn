@@ -57,6 +57,10 @@ public final class ModConfig {
     public static boolean autoBerryCountHud = true;
     public static boolean autoBerryHighlight = false;
     public static boolean autoBerryVisibleOnly = false;
+    public static int berryHighlightRadius = 8;
+    public static int berryHighlightScanTicks = 5;
+    public static int berryHighlightColor = 0xFF55E58A;
+    public static boolean berryHighlightDebug = false;
 
     private ModConfig() {}
 
@@ -109,6 +113,10 @@ public final class ModConfig {
             autoBerryCountHud = bool(j, "autoBerryCountHud", true);
             autoBerryHighlight = bool(j, "autoBerryHighlight", false);
             autoBerryVisibleOnly = bool(j, "autoBerryVisibleOnly", false);
+            berryHighlightRadius = clampInt(integer(j, "berryHighlightRadius", 8), 1, 16);
+            berryHighlightScanTicks = clampInt(integer(j, "berryHighlightScanTicks", 5), 1, 40);
+            berryHighlightColor = integer(j, "berryHighlightColor", 0xFF55E58A) | 0xFF000000;
+            berryHighlightDebug = bool(j, "berryHighlightDebug", false);
             // Older configs limited discovery to interaction reach, missing bushes ahead of a minecart.
             if (loadedVersion < 4) {
                 autoBerryLimitReach = false;
@@ -165,6 +173,10 @@ public final class ModConfig {
         j.addProperty("autoBerryCountHud", autoBerryCountHud);
         j.addProperty("autoBerryHighlight", autoBerryHighlight);
         j.addProperty("autoBerryVisibleOnly", autoBerryVisibleOnly);
+        j.addProperty("berryHighlightRadius", berryHighlightRadius);
+        j.addProperty("berryHighlightScanTicks", berryHighlightScanTicks);
+        j.addProperty("berryHighlightColor", berryHighlightColor);
+        j.addProperty("berryHighlightDebug", berryHighlightDebug);
         try {
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, GSON.toJson(j));
