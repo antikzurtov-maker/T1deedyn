@@ -380,12 +380,13 @@ public final class BlackCloverScreen extends Screen {
         if(layout==null)layout=new UiLayout(width,height);
         mouseXCache=mx;mouseYCache=my;
         if(profileModal){
-            if(button==0){int mw=Math.min(330,width-24),mx0=(width-mw)/2,my0=(height-206)/2,by=my0+172;
+            if(button==0){int mw=Math.min(360,width-24),mx0=(width-mw)/2,my0=(height-226)/2,by=my0+192,bw=(mw-32)/4;
                 if(inside(mx,my,mx0+12,my0+34,mw-24,24))return true;
                 List<String> p=CloverProfiles.list();for(int i=0;i<Math.min(4,p.size());i++)if(inside(mx,my,mx0+12,my0+66+i*21,mw-24,19)){selectedProfile=p.get(i);profileName=selectedProfile;return true;}
-                if(inside(mx,my,mx0+12,by,88,23)){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}
-                if(inside(mx,my,mx0+106,by,88,23)){if(!selectedProfile.isEmpty())CloverProfiles.load(selectedProfile);profileModal=false;return true;}
-                if(inside(mx,my,mx0+200,by,Math.max(60,mw-212),23)){if(!selectedProfile.isEmpty())CloverProfiles.delete(selectedProfile);selectedProfile="";return true;}
+                if(inside(mx,my,mx0+12,by,bw,23)){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}
+                if(inside(mx,my,mx0+14+bw,by,bw,23)){if(!selectedProfile.isEmpty()&&!profileName.equals(selectedProfile)&&CloverProfiles.rename(selectedProfile,profileName))selectedProfile=profileName;return true;}
+                if(inside(mx,my,mx0+16+2*bw,by,bw,23)){if(!selectedProfile.isEmpty()&&CloverProfiles.load(selectedProfile)){profileModal=false;return true;}return true;}
+                if(inside(mx,my,mx0+18+3*bw,by,bw,23)){if(!selectedProfile.isEmpty()&&CloverProfiles.delete(selectedProfile))selectedProfile="";return true;}
             }return true;
         }
         if(themeDropdown){if(button==0){int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48;for(int i=0;i<Theme.Preset.values().length;i++)if(inside(mx,my,x,y+4+i*18,112,18)){Theme.select(Theme.Preset.values()[i]);ModConfig.accentTheme=i;ModConfig.save();themeDropdown=false;return true;}}themeDropdown=false;return true;}
