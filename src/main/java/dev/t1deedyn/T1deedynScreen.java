@@ -20,6 +20,9 @@ public final class T1deedynScreen extends Screen {
     private int activeSlider = -1;
     private float openProgress;
     private int gameScroll;
+    private final ScrollPanel scrollPanel = new ScrollPanel();
+    private long lastFrameNanos = System.nanoTime();
+    private boolean contentDragConsumed;
     private Integer previousMenuBlur;
 
     public T1deedynScreen() { super(Text.literal("T1deedyn")); }
@@ -29,7 +32,12 @@ public final class T1deedynScreen extends Screen {
             float hue = (System.currentTimeMillis() % 6000L) / 6000.0f;
             return java.awt.Color.HSBtoRGB(hue, 0.72f, 1.0f) | 0xFF000000;
         }
-        return ACCENTS[Math.max(0, Math.min(2, ModConfig.accentTheme))];
+        int rgb = Integer.parseInt(ModConfig.accentHex.substring(1), 16);
+        float brightness = (float) ModConfig.accentBrightness;
+        int r = Math.min(255, Math.round(((rgb >> 16) & 255) * brightness));
+        int g = Math.min(255, Math.round(((rgb >> 8) & 255) * brightness));
+        int b = Math.min(255, Math.round((rgb & 255) * brightness));
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
     private int panelColor() {
@@ -59,10 +67,8 @@ public final class T1deedynScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_X || keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            close();
-            return true;
-        }
+        if (keyCode == GLFW.GLFW_KEY_X || keyCode == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
+        if (scrollPanel.key(keyCode)) return true;
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
@@ -119,6 +125,13 @@ public final class T1deedynScreen extends Screen {
 
         int x = left + 158;
         int contentRight = left + panelWidth - 22;
+        int viewportY = py + 66;
+        int viewportH = Math.max(32, panelHeight - 104);
+        int contentH = switch (selectedTab) { case 3 -> 69 + 20 * 22 + 20; case 6 -> 300; default -> 270; };
+        scrollPanel.layout(selectedTab, x - 8, viewportY, contentRight - x + 16, viewportH, contentH);
+        long frameNow = System.nanoTime();
+        scrollPanel.tick(Math.min(0.1, (frameNow - lastFrameNanos) / 1_000_000_000.0));
+        lastFrameNanos = frameNow;
         String heading = switch (selectedTab) {
             case 1 -> "Визуальные эффекты";
             case 2 -> "Настройка HUD";
@@ -131,6 +144,9 @@ public final class T1deedynScreen extends Screen {
         c.drawText(textRenderer, heading, x, py + 22, TEXT, false);
         c.drawText(textRenderer, "Персонализируй внешний вид T1deedyn", x, py + 42, MUTED, false);
 
+        c.enableScissor(x - 8, viewportY, contentRight + 8, viewportY + viewportH);
+        c.getMatrices().push();
+        c.getMatrices().translate(0.0, -scrollPanel.offset(), 0.0);
         switch (selectedTab) {
             case 1 -> {
                 toggle(c, x, py + 88, contentRight, "Частицы в меню", ModConfig.particles);
@@ -171,12 +187,25 @@ public final class T1deedynScreen extends Screen {
                 c.drawText(textRenderer, "Добро пожаловать!", x, py + 88, TEXT, false);
                 c.drawText(textRenderer, "Меню открывается и закрывается клавишей X.", x, py + 112, MUTED, false);
                 c.drawText(textRenderer, "Настрой внешний вид во вкладке «Настройки».", x, py + 136, MUTED, false);
-                rounded(c, x, py + 178, x + 205, py + 224, 9, 0xFF282333);
-                c.drawText(textRenderer, "T1  •  CUSTOM VISUALS", x + 14, py + 195, accent(), false);
+                rounded(c, x, py + 84, contentRight, py + 140, 9, Theme.get(accent()).panelTint);
+                c.drawBorder(x, py + 84, contentRight - x, 56, Theme.get(accent()).accentDim);
+                c.drawText(textRenderer, "СОЗДАТЕЛИ", x + 12, py + 91, MUTED, false);
+                rounded(c, x + 12, py + 108, x + 30, py + 126, 4, accent());
+                c.drawText(textRenderer, "T1deedyn", x + 38, py + 111, Theme.get(accent()).accentBright, false);
+                c.drawText(textRenderer, "&", x + 108, py + 111, 0x99AAA5B8, false);
+                c.drawText(textRenderer, "PvE_BoTiK", x + 123, py + 111, Theme.get(accent()).accentBright, false);
+                rounded(c, x, py + 152, x + 205, py + 198, 9, 0xFF282333);
+                c.drawText(textRenderer, "T1  •  CUSTOM VISUALS", x + 14, py + 169, accent(), false);
             }
         }
 
-        c.drawText(textRenderer, "T1deedyn  •  build 0.3.0", x, py + panelHeight - 15, MUTED, false);
+        c.getMatrices().pop();
+        c.disableScissor();
+        scrollPanel.renderBar(c, accent());
+        if (selectedTab == 6) {
+            c.drawText(textRenderer, "X или ESC — закрыть меню", x, py + panelHeight - 31, MUTED, false);
+            c.drawText(textRenderer, "T1deedyn  •  build " + ModConfig.BUILD_VERSION, x, py + panelHeight - 16, MUTED, false);
+        }
         if (selectedTab == 1 && ModConfig.particles) drawParticles(c, mouseX, mouseY);
         // Do not call Screen.render here: this screen owns its complete
         // rendering pass and must not trigger any inherited background path.
@@ -338,6 +367,7 @@ public final class T1deedynScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (button != 0) return super.mouseClicked(mx, my, button);
+        if (mx >= left + 145 && mx <= left + panelWidth - 10 && my >= top + 65 && my <= top + panelHeight - 38) scrollPanel.mouseDown(mx, my);
         if (mx >= left && mx <= left + panelWidth && my >= top && my <= top + 48) {
             dragging = true; dragOffsetX = mx - left; dragOffsetY = my - top; return true;
         }
@@ -387,14 +417,11 @@ public final class T1deedynScreen extends Screen {
     }
 
     @Override public boolean mouseScrolled(double mx, double my, double horizontalAmount, double verticalAmount) {
-        if (selectedTab == 3 && mx >= left + 145 && my >= top + 55 && my <= top + panelHeight - 20) {
-            gameScroll = Math.max(0, Math.min(8, gameScroll + (verticalAmount < 0 ? 1 : -1)));
-            return true;
-        }
-        return super.mouseScrolled(mx, my, horizontalAmount, verticalAmount);
+        return scrollPanel.wheel(mx, my, verticalAmount) || super.mouseScrolled(mx, my, horizontalAmount, verticalAmount);
     }
 
     @Override public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (button == 0 && scrollPanel.mouseMove(mx, my)) { contentDragConsumed = true; return true; }
         if (dragging && button == 0) {
             left = Math.max(0, Math.min(width - panelWidth, (int)Math.round(mx - dragOffsetX)));
             top = Math.max(0, Math.min(height - panelHeight, (int)Math.round(my - dragOffsetY)));
@@ -405,7 +432,11 @@ public final class T1deedynScreen extends Screen {
     }
 
     @Override public boolean mouseReleased(double mx, double my, int button) {
-        if (button == 0) { dragging = false; sliderDragging = false; activeSlider = -1; }
+        if (button == 0) {
+            dragging = false; sliderDragging = false; activeSlider = -1;
+            boolean consumed = contentDragConsumed; contentDragConsumed = false; scrollPanel.mouseUp();
+            if (consumed) return true;
+        }
         return super.mouseReleased(mx, my, button);
     }
 
