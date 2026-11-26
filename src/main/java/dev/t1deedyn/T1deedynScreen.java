@@ -2,6 +2,7 @@ package dev.t1deedyn;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -19,6 +20,7 @@ public final class T1deedynScreen extends Screen {
     private int activeSlider = -1;
     private float openProgress;
     private int gameScroll;
+    private Integer previousMenuBlur;
 
     public T1deedynScreen() { super(Text.literal("T1deedyn")); }
 
@@ -37,8 +39,15 @@ public final class T1deedynScreen extends Screen {
 
     @Override
     protected void init() {
-        panelWidth = Math.min((int)(610 * ModConfig.uiScale), this.width - 24);
-        panelHeight = Math.min((int)(370 * ModConfig.uiScale), this.height - 24);
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (previousMenuBlur == null && mc.options != null) {
+            previousMenuBlur = mc.options.getMenuBackgroundBlurrinessValue();
+        }
+        if (mc.options != null) mc.options.getMenuBackgroundBlurriness().setValue(0);
+
+        int integerScale = Math.max(1, Math.min(3, ModConfig.uiScale));
+        panelWidth = Math.min(610 * integerScale, this.width - 24);
+        panelHeight = Math.min(370 * integerScale, this.height - 24);
         panelWidth = Math.max(360, panelWidth);
         panelHeight = Math.max(260, panelHeight);
         left = (this.width - panelWidth) / 2;
@@ -59,10 +68,29 @@ public final class T1deedynScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        int alpha = (int)(Math.max(0.0, Math.min(0.75, ModConfig.backgroundDim)) * 255.0);
+        context.fill(0, 0, width, height, (alpha << 24));
+    }
+
+    @Override
+    protected void applyBlur(float delta) {
+        // Intentionally disabled for this screen.
+    }
+
+    @Override
+    public void removed() {
+        if (previousMenuBlur != null && client != null && client.options != null) {
+            client.options.getMenuBackgroundBlurriness().setValue(previousMenuBlur);
+            previousMenuBlur = null;
+        }
+        super.removed();
+    }
+
+    @Override
     public void render(DrawContext c, int mouseX, int mouseY, float delta) {
-        int dim = (int)(Math.max(0.0, Math.min(0.75, ModConfig.backgroundDim)) * 255);
-        c.fill(0, 0, width, height, (dim << 24));
-        int slide = ModConfig.menuAnimations ? (int)((1.0f - openProgress) * 10) : 0;
+        renderBackground(c, mouseX, mouseY, delta);
+        int slide = ModConfig.menuAnimations ? Math.round((1.0f - openProgress) * 10.0f) : 0;
         int py = top + slide;
         if (ModConfig.skyVisual) drawSky(c, py);
         rounded(c, left, py, left + panelWidth, py + panelHeight, 13, panelColor());
@@ -177,10 +205,10 @@ public final class T1deedynScreen extends Screen {
             case 3 -> "Собирать обычные кусты сладких ягод.";
             case 4 -> "Собирать светящиеся пещерные лозы с ягодами.";
             case 5 -> "Вторая стадия даёт меньше ягод, чем полностью спелый куст.";
-            case 6 -> "Базовая пауза между ПКМ в игровых тиках.";
+            case 6 -> "Интервал между кликами: 0 = каждый игровой тик.";
             case 7 -> "К базовой задержке добавляется случайное число от 0 до N.";
-            case 8 -> "Жёсткий предел числа кликов за одну секунду.";
-            case 9 -> "Как часто искать новые кусты. Больше тиков = меньше нагрузка.";
+            case 8 -> "Предел до 20 кликов/с, ограничен одним действием за тик.";
+            case 9 -> "Частота поиска: 1 тик для быстрой фермы.";
             case 10 -> "Пока игрок движется, клики и поиск целей приостанавливаются.";
             case 11 -> "Пауза в инвентаре, чате и любом другом открытом экране.";
             case 12 -> "Не собирать во время еды, натягивания лука или блокирования.";
@@ -226,9 +254,9 @@ public final class T1deedynScreen extends Screen {
             case 2 -> ModConfig.autoBerryLimitReach = !ModConfig.autoBerryLimitReach;
             case 3 -> ModConfig.autoBerrySweet = !ModConfig.autoBerrySweet; case 4 -> ModConfig.autoBerryGlow = !ModConfig.autoBerryGlow;
             case 5 -> ModConfig.autoBerryStageTwo = !ModConfig.autoBerryStageTwo;
-            case 6 -> ModConfig.autoBerryClickDelay = cycle(ModConfig.autoBerryClickDelay, 1, 20);
+            case 6 -> ModConfig.autoBerryClickDelay = cycle(ModConfig.autoBerryClickDelay, 0, 20);
             case 7 -> ModConfig.autoBerryRandomDelay = cycle(ModConfig.autoBerryRandomDelay, 0, 5);
-            case 8 -> ModConfig.autoBerryMaxCps = cycle(ModConfig.autoBerryMaxCps, 1, 10);
+            case 8 -> ModConfig.autoBerryMaxCps = cycle(ModConfig.autoBerryMaxCps, 1, 20);
             case 9 -> ModConfig.autoBerryScanTicks = cycle(ModConfig.autoBerryScanTicks, 1, 20);
             case 10 -> ModConfig.autoBerryOnlyStationary = !ModConfig.autoBerryOnlyStationary;
             case 11 -> ModConfig.autoBerryPauseWithScreen = !ModConfig.autoBerryPauseWithScreen;
