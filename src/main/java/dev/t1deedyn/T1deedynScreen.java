@@ -273,7 +273,7 @@ public final class T1deedynScreen extends Screen {
         c.drawText(textRenderer,name,x+5,y+1,TEXT,false);
         int sx=x+8,ex=right-48,ty=y+16;
         SliderHitboxes.Rect rect=berrySliderHitboxes.get(id);
-        rect.set(sx-berryViewportX,ty-11-berryViewportY+scrollPanel.offset(),ex-sx,25);
+        rect.set(sx-berryViewportX,ty-9-berryViewportY+scrollPanel.offset(),ex-sx,22);
         c.fill(sx,ty,ex,ty+3,0xFF403B4A);
         int k=sx+(int)Math.round((ex-sx)*(value-min)/(max-min));c.fill(sx,ty,k,ty+3,accent());c.fill(k-4,ty-3,k+5,ty+8,0xFFF5F0FF);
         String v=id==0?BERRY_RADIUS_TEXT[(int)Math.max(0,Math.min(8,Math.round((value-1.0)*2.0)))]:BERRY_INT_TEXT[(int)Math.max(0,Math.min(20,value))];
