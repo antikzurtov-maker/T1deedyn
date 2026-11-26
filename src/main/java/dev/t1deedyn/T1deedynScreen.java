@@ -19,8 +19,7 @@ public final class T1deedynScreen extends Screen {
     private double dragOffsetX, dragOffsetY;
     private int activeSlider = -1;
     private float openProgress;
-    private int gameScroll;
-    private final ScrollPanel scrollPanel = new ScrollPanel();
+        private final ScrollPanel scrollPanel = new ScrollPanel();
     private long lastFrameNanos = System.nanoTime();
     private boolean contentDragConsumed;
     private Integer previousMenuBlur;
@@ -127,7 +126,7 @@ public final class T1deedynScreen extends Screen {
         int contentRight = left + panelWidth - 22;
         int viewportY = py + 66;
         int viewportH = Math.max(32, panelHeight - 104);
-        int contentH = switch (selectedTab) { case 3 -> 69 + 20 * 22 + 20; case 6 -> 300; default -> 270; };
+        int contentH = switch (selectedTab) { case 1 -> 230; case 2 -> 170; case 3 -> 69 + 20 * 22 + 20; case 4 -> 150; case 5 -> 220; case 6 -> 300; default -> 230; };
         scrollPanel.layout(selectedTab, x - 8, viewportY, contentRight - x + 16, viewportH, contentH);
         long frameNow = System.nanoTime();
         scrollPanel.tick(Math.min(0.1, (frameNow - lastFrameNanos) / 1_000_000_000.0));
@@ -214,17 +213,16 @@ public final class T1deedynScreen extends Screen {
 
     private void drawGameSettings(DrawContext c, int x, int py, int right, int mouseX, int mouseY) {
         c.drawText(textRenderer, "AutoBerry  •  V — вкл/выкл", x, py + 51, MUTED, false);
-        for (int i = 0; i < 12; i++) {
-            int index = gameScroll + i;
-            if (index >= 20) break;
+        for (int i = 0; i < 20; i++) {
+            int index = i;
             int y = py + 69 + i * 22;
             if ((i & 1) == 0) c.fill(x - 5, y - 3, right, y + 17, 0x331F1B2A);
             c.drawText(textRenderer, gameSettingName(index), x, y, TEXT, false);
             String value = gameSettingValue(index);
             c.drawText(textRenderer, value, right - textRenderer.getWidth(value), y, accent(), false);
         }
-        int hovered = gameScroll + (int)((mouseY - (py + 69)) / 22.0);
-        String hint = mouseX >= x && mouseX <= right && hovered >= gameScroll && hovered < Math.min(20, gameScroll + 12) ? gameSettingHint(hovered) : "Колесо мыши: прокрутка  •  нажми строку для изменения";
+        int hovered = (int)((mouseY - (py + 69)) / 22.0) + scrollPanel.offset() / 22;
+        String hint = mouseX >= x && mouseX <= right && hovered >= 0 && hovered < 20 ? gameSettingHint(hovered) : "Колесо мыши: прокрутка  •  нажми строку для изменения";
         c.drawText(textRenderer, hint, x, py + panelHeight - 28, MUTED, false);
     }
     private String gameSettingHint(int i) {
