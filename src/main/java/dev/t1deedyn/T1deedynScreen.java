@@ -45,13 +45,12 @@ public final class T1deedynScreen extends Screen {
         }
         if (mc.options != null) mc.options.getMenuBackgroundBlurriness().setValue(0);
 
-        int integerScale = Math.max(1, Math.min(3, ModConfig.uiScale));
-        panelWidth = Math.min(610 * integerScale, this.width - 24);
-        panelHeight = Math.min(370 * integerScale, this.height - 24);
-        panelWidth = Math.max(360, panelWidth);
-        panelHeight = Math.max(260, panelHeight);
-        left = (this.width - panelWidth) / 2;
-        top = (this.height - panelHeight) / 2;
+        // GUI coordinates are already integer-scaled by Minecraft. Keep the
+        // menu geometry in whole GUI pixels and never apply fractional matrices.
+        panelWidth = Math.max(1, Math.min(610, this.width - 24));
+        panelHeight = Math.max(1, Math.min(370, this.height - 24));
+        left = Math.round((this.width - panelWidth) / 2.0f);
+        top = Math.round((this.height - panelHeight) / 2.0f);
     }
 
     @Override public void tick() {
@@ -69,7 +68,8 @@ public final class T1deedynScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        int alpha = (int)(Math.max(0.0, Math.min(0.75, ModConfig.backgroundDim)) * 255.0);
+        int alpha = Math.round((float)(Math.max(0.0, Math.min(0.75, ModConfig.backgroundDim)) * 255.0));
+        // A single flat black overlay; no texture, shader, framebuffer or blur.
         context.fill(0, 0, width, height, (alpha << 24));
     }
 
@@ -178,7 +178,8 @@ public final class T1deedynScreen extends Screen {
 
         c.drawText(textRenderer, "T1deedyn  •  build 0.3.0", x, py + panelHeight - 15, MUTED, false);
         if (selectedTab == 1 && ModConfig.particles) drawParticles(c, mouseX, mouseY);
-        super.render(c, mouseX, mouseY, delta);
+        // Do not call Screen.render here: this screen owns its complete
+        // rendering pass and must not trigger any inherited background path.
     }
 
 
@@ -395,8 +396,8 @@ public final class T1deedynScreen extends Screen {
 
     @Override public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
         if (dragging && button == 0) {
-            left = Math.max(0, Math.min(width - panelWidth, (int)(mx - dragOffsetX)));
-            top = Math.max(0, Math.min(height - panelHeight, (int)(my - dragOffsetY)));
+            left = Math.max(0, Math.min(width - panelWidth, (int)Math.round(mx - dragOffsetX)));
+            top = Math.max(0, Math.min(height - panelHeight, (int)Math.round(my - dragOffsetY)));
             return true;
         }
         if (sliderDragging && button == 0) { setSlider(mx); return true; }
