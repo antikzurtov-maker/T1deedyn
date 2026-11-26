@@ -1,9 +1,10 @@
 package dev.t1deedyn;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.CaveVines;
@@ -49,9 +50,9 @@ public final class AutoBerry extends VisualModule {
     private static final BlockPos.Mutable SCAN_POS = new BlockPos.Mutable();
     private static final ArrayList<BlockPos> TARGETS = new ArrayList<>(MAX_TARGETS);
     private static final double[] TARGET_DISTANCES = new double[MAX_TARGETS];
-    private static final HashMap<Long, Long> RECENTLY_CLICKED = new HashMap<>();
-    private static final HashMap<Long, Long> BLACKLIST = new HashMap<>();
-    private static final HashMap<Long, Integer> FAILURES = new HashMap<>();
+    private static final Long2LongOpenHashMap RECENTLY_CLICKED = new Long2LongOpenHashMap();
+    private static final Long2LongOpenHashMap BLACKLIST = new Long2LongOpenHashMap();
+    private static final Long2IntOpenHashMap FAILURES = new Long2IntOpenHashMap();
     private static final Random RANDOM = Random.create();
 
     private static final double[] EYE = new double[3];
@@ -106,6 +107,8 @@ public final class AutoBerry extends VisualModule {
                 double dy = player.getY() - previousY;
                 double dz = player.getZ() - previousZ;
                 if (havePreviousPosition && dx * dx + dy * dy + dz * dz > 0.0004) {
+                    TARGETS.clear();
+                    lastScanTick = tickCounter - ModConfig.autoBerryScanTicks;
                     rememberPosition(player);
                     return;
                 }
@@ -298,27 +301,28 @@ public final class AutoBerry extends VisualModule {
 
     private static void cleanExpiredMaps(World world, ClientPlayerEntity player) {
         if (!RECENTLY_CLICKED.isEmpty()) {
-        Iterator<Map.Entry<Long, Long>> recent = RECENTLY_CLICKED.entrySet().iterator();
+        ObjectIterator<Long2LongMap.Entry> recent = RECENTLY_CLICKED.long2LongEntrySet().fastIterator();
         while (recent.hasNext()) {
-            Map.Entry<Long, Long> entry = recent.next();
-            if (entry.getValue() > tickCounter) continue;
-            BlockPos pos = BlockPos.fromLong(entry.getKey());
+            Long2LongMap.Entry entry = recent.next();
+            if (entry.getLongValue() > tickCounter) continue;
+            long key = entry.getLongKey();
+            BlockPos pos = BlockPos.fromLong(key);
             if (isReadyBerry(world.getBlockState(pos))) {
-                int failures = FAILURES.getOrDefault(entry.getKey(), 0) + 1;
-                FAILURES.put(entry.getKey(), failures);
+                int failures = FAILURES.get(key) + 1;
+                FAILURES.put(key, failures);
                 if (failures >= 3) {
-                    BLACKLIST.put(entry.getKey(), tickCounter + 100);
-                    FAILURES.remove(entry.getKey());
+                    BLACKLIST.put(key, tickCounter + 100);
+                    FAILURES.remove(key);
                 }
             } else {
-                FAILURES.remove(entry.getKey());
+                FAILURES.remove(key);
             }
             recent.remove();
         }
         }
         if (!BLACKLIST.isEmpty()) {
-        Iterator<Map.Entry<Long, Long>> blocked = BLACKLIST.entrySet().iterator();
-        while (blocked.hasNext()) if (blocked.next().getValue() <= tickCounter) blocked.remove();
+        ObjectIterator<Long2LongMap.Entry> blocked = BLACKLIST.long2LongEntrySet().fastIterator();
+        while (blocked.hasNext()) if (blocked.next().getLongValue() <= tickCounter) blocked.remove();
         }
     }
 
