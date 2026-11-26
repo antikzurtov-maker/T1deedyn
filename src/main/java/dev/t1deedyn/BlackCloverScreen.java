@@ -29,6 +29,7 @@ public final class BlackCloverScreen extends Screen {
     private String search="";
     private int hoverRow=-1;
     private int draggingSlider=-1;
+    private int animationTicks;
 
     public BlackCloverScreen(){super(Text.literal("Чёрный Клевер"));}
     @Override protected void init(){layout=new UiLayout(width,height);refreshFeatures();}
@@ -54,6 +55,7 @@ public final class BlackCloverScreen extends Screen {
 
     @Override public void render(DrawContext c,int mouseX,int mouseY,float delta){
         renderBackground(c,mouseX,mouseY,delta);
+        renderAtmosphere(c);
         if(layout==null)layout=new UiLayout(width,height);
         int x=layout.x,y=layout.y,w=layout.width,h=layout.height;
         int accent=Theme.accentColor(),bright=Theme.brightAccentColor();
@@ -154,6 +156,25 @@ public final class BlackCloverScreen extends Screen {
         RoundedRect.border(c,tagX,tagY,tagW,22,8,1,bright,Theme.PANEL);
         CloverMark.draw(c,tagX+6,tagY+4,14,accent);
         c.drawText(textRenderer,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,bright,false);
+    }
+
+    private void renderAtmosphere(DrawContext c){
+        if(!ModConfig.menuAnimations)return;
+        animationTicks++;
+        int green=0x182BE36B;
+        // Soft emerald vignette around the screen edges.
+        c.fill(0,0,width,3,0x242BE36B);
+        c.fill(0,height-4,width,height,0x202BE36B);
+        c.fill(0,0,3,height,0x182BE36B);
+        c.fill(width-3,0,width,height,0x182BE36B);
+        int count=Math.max(0,Math.min(20,ModConfig.particleLimit));
+        for(int i=0;i<count;i++){
+            double phase=animationTicks*0.018+i*2.399963229728653;
+            int px=(int)((i*97L+Math.sin(phase)*24+width)%Math.max(1,width));
+            int py=(int)((i*53L-animationTicks*0.32+Math.cos(phase*0.7)*13+height*3L)%Math.max(1,height));
+            int alpha=0x50000000|0x002BE36B;
+            CloverMark.draw(c,px,py,6+(i%3)*2,alpha);
+        }
     }
 
     private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int accent){
