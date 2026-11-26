@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -28,8 +29,36 @@ public final class BlackCloverScreen extends Screen {
     private int draggingSlider=-1, animationTicks, hoverRow=-1;
     private int lastWidth=-1,lastHeight=-1;
     private int rightContentHeight;
+    private final double previousScale;
+    private boolean scaleRestored;
 
-    public BlackCloverScreen(){super(Text.literal("Чёрный Клевер"));}
+    public BlackCloverScreen(){
+        super(Text.literal("Чёрный Клевер"));
+        MinecraftClient client=MinecraftClient.getInstance();
+        previousScale=client.getWindow().getScaleFactor();
+        applyMenuScale(client);
+    }
+    private void applyMenuScale(MinecraftClient client){
+        var window=client.getWindow();
+        int selected=ModConfig.uiScale;
+        int scale;
+        if(selected==0){
+            scale=1;
+            int fw=window.getWidth(),fh=window.getHeight();
+            while(scale<4&&fw/(scale+1)>=760&&fh/(scale+1)>=420)scale++;
+        }else scale=clamp(selected,1,4);
+        window.setScaleFactor(scale);
+        client.onResolutionChanged();
+    }
+    @Override public void removed(){
+        if(!scaleRestored){
+            scaleRestored=true;
+            MinecraftClient client=MinecraftClient.getInstance();
+            client.getWindow().setScaleFactor(previousScale);
+            client.onResolutionChanged();
+        }
+        super.removed();
+    }
     @Override protected void init(){
         layout=new UiLayout(width,height);
         lastWidth=width;lastHeight=height;
@@ -382,7 +411,10 @@ public final class BlackCloverScreen extends Screen {
                     if(inside(mx,my,rx+12,ry+163,rw-24,16)){draggingSlider=1;setSliderValue(1,mx);return true;}
                     if(inside(mx,my,rx,ry+217,rw,28)){cycleTheme();return true;}
                     if(inside(mx,my,rx,ry+253,rw,24)){Theme.setCustomAccent(Theme.ACCENT);Theme.select(Theme.Preset.CLOVER);ModConfig.accentTheme=0;ModConfig.accentHex="#2BE36B";ModConfig.save();return true;}
-                    if(inside(mx,my,rx,ry+307,rw,25)){ModConfig.uiScale=(ModConfig.uiScale+1)%5;ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+307,rw,25)){
+                        ModConfig.uiScale=(ModConfig.uiScale+1)%5;ModConfig.save();
+                        applyMenuScale(MinecraftClient.getInstance());return true;
+                    }
                     if(inside(mx,my,rx,ry+339,rw,24)){ModConfig.showBounds=!ModConfig.showBounds;ModConfig.save();return true;}
                 }else if(inside(mx,my,rx+rw-42,ry+76,40,20)){CloverFeature f=visibleFeatures.get(selectedFeature);f.setEnabled(!f.enabled());return true;}
             }
