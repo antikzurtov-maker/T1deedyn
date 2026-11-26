@@ -3,181 +3,248 @@ package dev.t1deedyn;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 public final class T1deedynScreen extends Screen {
-    private static final int PANEL = 0xF0181822;
-    private static final int PANEL_LIGHT = 0xFF242432;
-    private static final int PURPLE = 0xFF8B5CF6;
-    private static final int TEXT = 0xFFF4F0FF;
+    private static final int TEXT = 0xFFF5F2FF;
     private static final int MUTED = 0xFFAAA5B8;
+    private static final int SIDEBAR = 0xFF15131D;
     private static final String[] TABS = {"Главная", "Визуал", "HUD", "Анимации", "Темы", "Настройки"};
+    private static final int[] ACCENTS = {0xFF9B70FF, 0xFF62A0FF, 0xFF54D6B0};
+    private static final String[] THEME_NAMES = {"Violet", "Ocean", "Mint"};
+
     private int left, top, panelWidth, panelHeight, selectedTab;
-    private boolean dragging;
+    private boolean dragging, sliderDragging;
     private double dragOffsetX, dragOffsetY;
-    private boolean sliderDragging;
+    private int activeSlider = -1;
     private float openProgress;
 
     public T1deedynScreen() { super(Text.literal("T1deedyn")); }
 
+    private int accent() { return ACCENTS[Math.max(0, Math.min(2, ModConfig.accentTheme))]; }
+    private int panelColor() {
+        int a = (int)(Math.max(0.72, Math.min(1.0, ModConfig.menuOpacity)) * 255);
+        return (a << 24) | 0x001B1925;
+    }
+
     @Override
     protected void init() {
-        panelWidth = Math.min(560, this.width - 24);
-        panelHeight = Math.min(340, this.height - 24);
+        panelWidth = Math.min((int)(610 * ModConfig.uiScale), this.width - 24);
+        panelHeight = Math.min((int)(370 * ModConfig.uiScale), this.height - 24);
+        panelWidth = Math.max(360, panelWidth);
+        panelHeight = Math.max(260, panelHeight);
         left = (this.width - panelWidth) / 2;
         top = (this.height - panelHeight) / 2;
     }
 
-    @Override
-    public void tick() {
-        if (openProgress < 1.0f) openProgress = Math.min(1.0f, openProgress + 0.12f);
+    @Override public void tick() {
+        if (openProgress < 1.0f) openProgress = Math.min(1.0f, openProgress + 0.16f);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
-        int slide = ModConfig.menuAnimations ? (int)((1.0f - openProgress) * 12.0f) : 0;
-        int yTop = top + slide;
-        context.fill(left, yTop, left + panelWidth, yTop + panelHeight, PANEL);
-        context.fill(left, yTop, left + panelWidth, yTop + 3, PURPLE);
-        context.fill(left, yTop, left + 126, yTop + panelHeight, 0xFF11111A);
-        context.fill(left + 126, yTop + 3, left + 127, yTop + panelHeight, 0xFF302B3B);
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_X || keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            close();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
 
-        context.drawText(textRenderer, "T1deedyn", left + 16, yTop + 17, TEXT, false);
-        context.drawText(textRenderer, "VISUAL CLIENT", left + 16, yTop + 35, MUTED, false);
-        context.fill(left + 14, yTop + 53, left + 110, yTop + 54, 0xFF34303F);
+    @Override
+    public void render(DrawContext c, int mouseX, int mouseY, float delta) {
+        int dim = (int)(Math.max(0.0, Math.min(0.75, ModConfig.backgroundDim)) * 255);
+        c.fill(0, 0, width, height, (dim << 24));
+        int slide = ModConfig.menuAnimations ? (int)((1.0f - openProgress) * 10) : 0;
+        int py = top + slide;
+        rounded(c, left, py, left + panelWidth, py + panelHeight, 13, panelColor());
+        rounded(c, left + 1, py + 1, left + panelWidth - 1, py + 4, 2, accent());
+        rounded(c, left + 1, py + 5, left + 137, py + panelHeight - 1, 10, SIDEBAR);
+        c.fill(left + 136, py + 12, left + 137, py + panelHeight - 12, 0xFF393344);
+
+        c.drawText(textRenderer, "T1deedyn", left + 19, py + 17, TEXT, false);
+        c.drawText(textRenderer, "VISUAL CLIENT", left + 19, py + 34, MUTED, false);
+        c.fill(left + 17, py + 54, left + 117, py + 55, 0xFF393344);
 
         for (int i = 0; i < TABS.length; i++) {
-            int y = yTop + 68 + i * 34;
-            boolean active = selectedTab == i;
-            if (active) {
-                context.fill(left + 8, y - 6, left + 118, y + 20, 0xFF302644);
-                context.fill(left + 8, y - 6, left + 11, y + 20, PURPLE);
+            int y = py + 70 + i * 36;
+            if (selectedTab == i) {
+                rounded(c, left + 9, y - 7, left + 126, y + 21, 7, 0xFF302641);
+                rounded(c, left + 9, y - 7, left + 12, y + 21, 2, accent());
             }
-            context.drawText(textRenderer, TABS[i], left + 20, y, active ? TEXT : MUTED, false);
+            c.drawText(textRenderer, TABS[i], left + 22, y, selectedTab == i ? TEXT : MUTED, false);
         }
 
-        int x = left + 148;
+        int x = left + 158;
+        int contentRight = left + panelWidth - 22;
         String heading = switch (selectedTab) {
             case 1 -> "Визуальные эффекты";
-            case 2 -> "Элементы HUD";
-            case 3 -> "Анимации интерфейса";
-            case 4 -> "Оформление";
-            case 5 -> "Настройки клиента";
+            case 2 -> "Настройка HUD";
+            case 3 -> "Анимации";
+            case 4 -> "Оформление меню";
+            case 5 -> "Настройки интерфейса";
             default -> "Главная панель";
         };
-        context.drawText(textRenderer, heading, x, yTop + 22, TEXT, false);
-        context.drawText(textRenderer, "Настрой параметры интерфейса T1deedyn", x, yTop + 42, MUTED, false);
+        c.drawText(textRenderer, heading, x, py + 22, TEXT, false);
+        c.drawText(textRenderer, "Персонализируй внешний вид T1deedyn", x, py + 42, MUTED, false);
 
         switch (selectedTab) {
             case 1 -> {
-                drawToggle(context, x, yTop + 86, "Частицы интерфейса", ModConfig.particles);
-                drawToggle(context, x, yTop + 126, "Уменьшенный огонь", ModConfig.lowFire);
-                drawToggle(context, x, yTop + 166, "Плавная камера", ModConfig.smoothCamera);
+                toggle(c, x, py + 88, contentRight, "Частицы в меню", ModConfig.particles);
+                c.drawText(textRenderer, "Декоративные светящиеся точки на фоне меню", x, py + 108, MUTED, false);
+                toggle(c, x, py + 148, contentRight, "Уменьшенный огонь", ModConfig.lowFire);
+                toggle(c, x, py + 188, contentRight, "Плавная камера", ModConfig.smoothCamera);
+                c.drawText(textRenderer, "Игровые эффекты будут подключаться отдельно.", x, py + 235, MUTED, false);
             }
             case 2 -> {
-                drawToggle(context, x, yTop + 86, "Чистый HUD", ModConfig.cleanHud);
-                drawToggle(context, x, yTop + 126, "Координаты", ModConfig.showCoordinates);
+                toggle(c, x, py + 88, contentRight, "Чистый HUD", ModConfig.cleanHud);
+                toggle(c, x, py + 132, contentRight, "Показывать координаты", ModConfig.showCoordinates);
+                c.drawText(textRenderer, "Переключатели HUD пока сохраняют настройки.", x, py + 190, MUTED, false);
             }
-            case 3 -> drawToggle(context, x, yTop + 86, "Анимация открытия меню", ModConfig.menuAnimations);
+            case 3 -> {
+                toggle(c, x, py + 88, contentRight, "Анимация открытия", ModConfig.menuAnimations);
+                c.drawText(textRenderer, "Плавное появление и смещение панели.", x, py + 111, MUTED, false);
+            }
             case 4 -> {
-                context.fill(x, yTop + 86, x + 42, yTop + 112, PURPLE);
-                context.fill(x + 52, yTop + 86, x + 94, yTop + 112, 0xFF5264B8);
-                context.fill(x + 104, yTop + 86, x + 146, yTop + 112, 0xFF299B83);
-                context.drawText(textRenderer, "Акцентные цвета (выбор темы появится позже)", x, yTop + 126, MUTED, false);
+                c.drawText(textRenderer, "Цветовая тема", x, py + 88, TEXT, false);
+                rounded(c, x, py + 116, x + 48, py + 151, 8, ACCENTS[0]);
+                rounded(c, x + 59, py + 116, x + 107, py + 151, 8, ACCENTS[1]);
+                rounded(c, x + 118, py + 116, x + 166, py + 151, 8, ACCENTS[2]);
+                c.drawText(textRenderer, "Активная: " + THEME_NAMES[ModConfig.accentTheme], x, py + 164, MUTED, false);
+                c.drawText(textRenderer, "Нажми на цвет, чтобы применить тему.", x, py + 190, MUTED, false);
             }
             case 5 -> {
-                context.drawText(textRenderer, "Клавиша меню: X", x, yTop + 86, TEXT, false);
-                context.drawText(textRenderer, "Файл настроек: config/t1deedyn.properties", x, yTop + 112, MUTED, false);
-                context.drawText(textRenderer, "Настройки сохраняются автоматически", x, yTop + 138, MUTED, false);
+                c.drawText(textRenderer, "Масштаб меню", x, py + 82, TEXT, false);
+                slider(c, x, py + 108, contentRight, ModConfig.uiScale, 0.80, 1.15, 0);
+                c.drawText(textRenderer, "Непрозрачность панели", x, py + 151, TEXT, false);
+                slider(c, x, py + 177, contentRight, ModConfig.menuOpacity, 0.72, 1.0, 1);
+                c.drawText(textRenderer, "Затемнение мира", x, py + 220, TEXT, false);
+                slider(c, x, py + 246, contentRight, ModConfig.backgroundDim, 0.0, 0.75, 2);
+                c.drawText(textRenderer, "X или ESC  •  закрыть меню", x, py + panelHeight - 28, MUTED, false);
             }
             default -> {
-                drawToggle(context, x, yTop + 86, "Частицы интерфейса", ModConfig.particles);
-                drawToggle(context, x, yTop + 126, "Чистый HUD", ModConfig.cleanHud);
-                context.drawText(textRenderer, "Масштаб интерфейса", x, yTop + 180, TEXT, false);
-                drawSlider(context, x, yTop + 210);
+                c.drawText(textRenderer, "Добро пожаловать!", x, py + 88, TEXT, false);
+                c.drawText(textRenderer, "Меню открывается и закрывается клавишей X.", x, py + 112, MUTED, false);
+                c.drawText(textRenderer, "Настрой внешний вид во вкладке «Настройки».", x, py + 136, MUTED, false);
+                rounded(c, x, py + 178, x + 205, py + 224, 9, 0xFF282333);
+                c.drawText(textRenderer, "T1  •  CUSTOM VISUALS", x + 14, py + 195, accent(), false);
             }
         }
 
-        context.drawText(textRenderer, "T1deedyn  •  build 0.2.0", x, yTop + panelHeight - 24, MUTED, false);
-        super.render(context, mouseX, mouseY, delta);
+        c.drawText(textRenderer, "T1deedyn  •  build 0.3.0", x, py + panelHeight - 15, MUTED, false);
+        if (selectedTab == 1 && ModConfig.particles) drawParticles(c, mouseX, mouseY);
+        super.render(c, mouseX, mouseY, delta);
     }
 
-    private void drawToggle(DrawContext c, int x, int y, String label, boolean enabled) {
+    private void drawParticles(DrawContext c, int mx, int my) {
+        long t = System.currentTimeMillis() / 35L;
+        for (int i = 0; i < 14; i++) {
+            int px = left + 150 + (int)((i * 47L + t * (i % 3 + 1)) % Math.max(1, panelWidth - 175));
+            int py = top + 60 + (int)((i * 29L + t / (i % 3 + 1)) % Math.max(1, panelHeight - 90));
+            c.fill(px, py, px + 2, py + 2, 0x887F63C8);
+        }
+    }
+
+    private void toggle(DrawContext c, int x, int y, int right, String label, boolean on) {
         c.drawText(textRenderer, label, x, y, TEXT, false);
-        int bx = left + panelWidth - 72;
-        c.fill(bx, y - 4, bx + 42, y + 13, enabled ? 0xFF6844B8 : PANEL_LIGHT);
-        c.fill(enabled ? bx + 25 : bx + 4, y - 1, enabled ? bx + 37 : bx + 16, y + 10, TEXT);
+        int bx = right - 45;
+        rounded(c, bx, y - 5, bx + 42, y + 13, 9, on ? accent() : 0xFF3A3744);
+        rounded(c, on ? bx + 25 : bx + 4, y - 2, on ? bx + 37 : bx + 16, y + 10, 6, 0xFFF7F4FF);
     }
 
-    private void drawSlider(DrawContext c, int x, int y) {
-        int end = left + panelWidth - 34;
-        c.fill(x, y, end, y + 4, PANEL_LIGHT);
-        int knob = x + (int)((end - x) * ((ModConfig.uiScale - 0.75) / 0.5));
-        c.fill(knob - 5, y - 5, knob + 5, y + 9, PURPLE);
-        c.drawText(textRenderer, String.format("%.2fx", ModConfig.uiScale), end - 38, y - 25, MUTED, false);
+    private void slider(DrawContext c, int x, int y, int right, double value, double min, double max, int id) {
+        int end = right - 2;
+        rounded(c, x, y, end, y + 5, 3, 0xFF403B4A);
+        int knob = x + (int)((end - x) * ((value - min) / (max - min)));
+        rounded(c, x, y, knob, y + 5, 3, accent());
+        rounded(c, knob - 5, y - 4, knob + 5, y + 10, 6, 0xFFF5F0FF);
+        String valueText = String.format(java.util.Locale.ROOT, "%.2f", value);
+        c.drawText(textRenderer, valueText, end - 36, y - 19, MUTED, false);
+    }
+
+    private void rounded(DrawContext c, int x1, int y1, int x2, int y2, int r, int color) {
+        int radius = Math.max(0, Math.min(r, Math.min((x2 - x1) / 2, (y2 - y1) / 2)));
+        for (int y = y1; y < y2; y++) {
+            int inset = 0;
+            if (y < y1 + radius) {
+                int dy = radius - (y - y1) - 1;
+                inset = radius - (int)Math.sqrt(Math.max(0, radius * radius - dy * dy));
+            } else if (y >= y2 - radius) {
+                int dy = radius - (y2 - y - 1) - 1;
+                inset = radius - (int)Math.sqrt(Math.max(0, radius * radius - dy * dy));
+            }
+            c.fill(x1 + inset, y, x2 - inset, y + 1, color);
+        }
     }
 
     private void setSlider(double mouseX) {
-        int x = left + 148;
-        int end = left + panelWidth - 34;
-        ModConfig.uiScale = Math.max(0.75, Math.min(1.25, 0.75 + 0.5 * ((mouseX - x) / (double)(end - x))));
+        int x = left + 158;
+        int end = left + panelWidth - 24;
+        double f = Math.max(0.0, Math.min(1.0, (mouseX - x) / Math.max(1.0, end - x)));
+        if (activeSlider == 0) ModConfig.uiScale = 0.80 + f * 0.35;
+        if (activeSlider == 1) ModConfig.menuOpacity = 0.72 + f * 0.28;
+        if (activeSlider == 2) ModConfig.backgroundDim = f * 0.75;
         ModConfig.save();
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && mouseY >= top && mouseY <= top + 48 && mouseX >= left && mouseX <= left + panelWidth) {
-            dragging = true;
-            dragOffsetX = mouseX - left;
-            dragOffsetY = mouseY - top;
-            return true;
+    public boolean mouseClicked(double mx, double my, int button) {
+        if (button != 0) return super.mouseClicked(mx, my, button);
+        if (mx >= left && mx <= left + panelWidth && my >= top && my <= top + 48) {
+            dragging = true; dragOffsetX = mx - left; dragOffsetY = my - top; return true;
         }
-        if (button == 0 && mouseX >= left + 8 && mouseX <= left + 120) {
+        if (mx >= left + 8 && mx <= left + 130) {
             for (int i = 0; i < TABS.length; i++) {
-                int y = top + 62 + i * 34;
-                if (mouseY >= y && mouseY <= y + 27) { selectedTab = i; return true; }
+                int y = top + 63 + i * 36;
+                if (my >= y && my <= y + 29) { selectedTab = i; return true; }
             }
         }
-        int x = left + 148;
-        int bx = left + panelWidth - 72;
-        if (button == 0 && mouseX >= bx - 2 && mouseX <= bx + 46) {
-            if (selectedTab == 0) {
-                if (mouseY >= top + 82 && mouseY <= top + 106) { ModConfig.particles = !ModConfig.particles; ModConfig.save(); return true; }
-                if (mouseY >= top + 122 && mouseY <= top + 146) { ModConfig.cleanHud = !ModConfig.cleanHud; ModConfig.save(); return true; }
-            } else if (selectedTab == 1) {
-                if (mouseY >= top + 82 && mouseY <= top + 106) { ModConfig.particles = !ModConfig.particles; ModConfig.save(); return true; }
-                if (mouseY >= top + 122 && mouseY <= top + 146) { ModConfig.lowFire = !ModConfig.lowFire; ModConfig.save(); return true; }
-                if (mouseY >= top + 162 && mouseY <= top + 186) { ModConfig.smoothCamera = !ModConfig.smoothCamera; ModConfig.save(); return true; }
-            } else if (selectedTab == 2) {
-                if (mouseY >= top + 82 && mouseY <= top + 106) { ModConfig.cleanHud = !ModConfig.cleanHud; ModConfig.save(); return true; }
-                if (mouseY >= top + 122 && mouseY <= top + 146) { ModConfig.showCoordinates = !ModConfig.showCoordinates; ModConfig.save(); return true; }
-            } else if (selectedTab == 3 && mouseY >= top + 82 && mouseY <= top + 106) {
-                ModConfig.menuAnimations = !ModConfig.menuAnimations; ModConfig.save(); return true;
+        int x = left + 158;
+        int right = left + panelWidth - 22;
+        int bx = right - 45;
+        if (selectedTab == 0 || selectedTab == 1 || selectedTab == 2 || selectedTab == 3) {
+            if (mx >= bx - 5 && mx <= bx + 48) {
+                if (selectedTab == 0 && my >= top + 82 && my <= top + 112) { ModConfig.particles = !ModConfig.particles; ModConfig.save(); return true; }
+                if (selectedTab == 1) {
+                    if (my >= top + 82 && my <= top + 112) { ModConfig.particles = !ModConfig.particles; ModConfig.save(); return true; }
+                    if (my >= top + 142 && my <= top + 170) { ModConfig.lowFire = !ModConfig.lowFire; ModConfig.save(); return true; }
+                    if (my >= top + 182 && my <= top + 210) { ModConfig.smoothCamera = !ModConfig.smoothCamera; ModConfig.save(); return true; }
+                }
+                if (selectedTab == 2) {
+                    if (my >= top + 82 && my <= top + 112) { ModConfig.cleanHud = !ModConfig.cleanHud; ModConfig.save(); return true; }
+                    if (my >= top + 126 && my <= top + 156) { ModConfig.showCoordinates = !ModConfig.showCoordinates; ModConfig.save(); return true; }
+                }
+                if (selectedTab == 3 && my >= top + 82 && my <= top + 112) { ModConfig.menuAnimations = !ModConfig.menuAnimations; ModConfig.save(); return true; }
             }
         }
-        if (button == 0 && selectedTab == 0 && mouseY >= top + 198 && mouseY <= top + 224 && mouseX >= x && mouseX <= left + panelWidth - 34) {
-            sliderDragging = true;
-            setSlider(mouseX);
-            return true;
+        if (selectedTab == 4 && my >= top + 110 && my <= top + 158) {
+            if (mx >= x && mx <= x + 50) ModConfig.accentTheme = 0;
+            else if (mx >= x + 58 && mx <= x + 110) ModConfig.accentTheme = 1;
+            else if (mx >= x + 116 && mx <= x + 170) ModConfig.accentTheme = 2;
+            else return super.mouseClicked(mx, my, button);
+            ModConfig.save(); return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        if (selectedTab == 5) {
+            if (my >= top + 98 && my <= top + 122) activeSlider = 0;
+            else if (my >= top + 167 && my <= top + 191) activeSlider = 1;
+            else if (my >= top + 236 && my <= top + 260) activeSlider = 2;
+            if (activeSlider >= 0) { sliderDragging = true; setSlider(mx); return true; }
+        }
+        return super.mouseClicked(mx, my, button);
     }
 
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    @Override public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
         if (dragging && button == 0) {
-            left = Math.max(0, Math.min(this.width - panelWidth, (int)(mouseX - dragOffsetX)));
-            top = Math.max(0, Math.min(this.height - panelHeight, (int)(mouseY - dragOffsetY)));
+            left = Math.max(0, Math.min(width - panelWidth, (int)(mx - dragOffsetX)));
+            top = Math.max(0, Math.min(height - panelHeight, (int)(my - dragOffsetY)));
             return true;
         }
-        if (sliderDragging && button == 0) { setSlider(mouseX); return true; }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        if (sliderDragging && button == 0) { setSlider(mx); return true; }
+        return super.mouseDragged(mx, my, button, dx, dy);
     }
 
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) { dragging = false; sliderDragging = false; }
-        return super.mouseReleased(mouseX, mouseY, button);
+    @Override public boolean mouseReleased(double mx, double my, int button) {
+        if (button == 0) { dragging = false; sliderDragging = false; activeSlider = -1; }
+        return super.mouseReleased(mx, my, button);
     }
 
     @Override public boolean shouldPause() { return false; }
