@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ModConfig {
-    private static final int CONFIG_VERSION = 4;
+    private static final int CONFIG_VERSION = 5;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -23,6 +23,8 @@ public final class ModConfig {
     public static double menuOpacity = 0.94;
     public static double backgroundDim = 0.25;
     public static int accentTheme = 0;
+    public static String accentHex = "#9B70FF";
+    public static double accentBrightness = 1.0;
     public static boolean skyVisual = true;
     public static boolean rgbLighting = true;
     public static boolean showFps = true;
@@ -72,6 +74,8 @@ public final class ModConfig {
             menuOpacity = clamp(number(j, "menuOpacity", menuOpacity), 0.72, 1.0);
             backgroundDim = clamp(number(j, "backgroundDim", backgroundDim), 0.0, 0.75);
             accentTheme = clampInt(integer(j, "accentTheme", 0), 0, 2);
+            accentHex = validHex(string(j, "accentHex", accentHex)) ? string(j, "accentHex", accentHex).toUpperCase(java.util.Locale.ROOT) : "#9B70FF";
+            accentBrightness = clamp(number(j, "accentBrightness", 1.0), 0.1, 1.0);
             skyVisual = bool(j, "skyVisual", skyVisual);
             rgbLighting = bool(j, "rgbLighting", rgbLighting);
             showFps = bool(j, "showFps", true);
@@ -126,6 +130,8 @@ public final class ModConfig {
         j.addProperty("menuOpacity", menuOpacity);
         j.addProperty("backgroundDim", backgroundDim);
         j.addProperty("accentTheme", accentTheme);
+        j.addProperty("accentHex", accentHex);
+        j.addProperty("accentBrightness", accentBrightness);
         j.addProperty("skyVisual", skyVisual);
         j.addProperty("rgbLighting", rgbLighting);
         j.addProperty("showFps", showFps);
@@ -162,6 +168,10 @@ public final class ModConfig {
             T1deedynClient.LOGGER.warn("Could not save T1deedyn config: {}", exception.getMessage());
         }
     }
+
+    private static String string(JsonObject j, String key, String fallback) { return j.has(key) && !j.get(key).isJsonNull() ? j.get(key).getAsString() : fallback; }
+
+    private static boolean validHex(String value) { return value != null && value.matches("#[0-9a-fA-F]{6}"); }
 
     private static boolean bool(JsonObject j, String key, boolean fallback) {
         return j.has(key) && !j.get(key).isJsonNull() ? j.get(key).getAsBoolean() : fallback;
