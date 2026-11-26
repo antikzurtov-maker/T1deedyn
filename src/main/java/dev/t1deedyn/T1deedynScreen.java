@@ -20,6 +20,8 @@ public final class T1deedynScreen extends Screen {
     private int activeSlider = -1;
     private float openProgress;
         private final ScrollPanel scrollPanel = new ScrollPanel();
+    private final SliderHitboxes berrySliderHitboxes = new SliderHitboxes();
+    private int berryViewportX, berryViewportY, berryViewportW, berryViewportH;
     private final ModuleCard autoBerryCard = new ModuleCard();
     private boolean awaitingBerryKey;
     private static final int BERRY_BODY_HEIGHT = 620;
@@ -133,7 +135,9 @@ public final class T1deedynScreen extends Screen {
         int x = left + 158;
         int contentRight = left + panelWidth - 22;
         int viewportY = py + 66;
+        berryViewportX = x - 8; berryViewportY = viewportY; berryViewportW = contentRight - x + 16;
         int viewportH = Math.max(32, panelHeight - 104);
+        berryViewportH = viewportH;
         if(selectedTab==3) autoBerryCard.tick();
         int contentH = switch (selectedTab) { case 1 -> 230; case 2 -> 170; case 3 -> 110 + autoBerryCard.animatedContentHeight(BERRY_BODY_HEIGHT); case 4 -> 150; case 5 -> 220; case 6 -> 300; default -> 300; };
         scrollPanel.layout(selectedTab, x - 8, viewportY, contentRight - x + 16, viewportH, contentH);
@@ -267,13 +271,17 @@ public final class T1deedynScreen extends Screen {
     }
     private int berrySlider(DrawContext c,int x,int right,int y,int id,String name,double value,double min,double max){
         c.drawText(textRenderer,name,x+5,y+1,TEXT,false);
-        int sx=x+8,ex=right-48,ty=y+16;c.fill(sx,ty,ex,ty+3,0xFF403B4A);
+        int sx=x+8,ex=right-48,ty=y+16;
+        SliderHitboxes.Rect rect=berrySliderHitboxes.get(id);
+        rect.set(sx-berryViewportX,ty-11-berryViewportY+scrollPanel.offset(),ex-sx,25);
+        c.fill(sx,ty,ex,ty+3,0xFF403B4A);
         int k=sx+(int)Math.round((ex-sx)*(value-min)/(max-min));c.fill(sx,ty,k,ty+3,accent());c.fill(k-4,ty-3,k+5,ty+8,0xFFF5F0FF);
-        String v=id==0?BERRY_RADIUS_TEXT[(int)Math.round((value-1.0)*2.0)]:BERRY_INT_TEXT[(int)value];
+        String v=id==0?BERRY_RADIUS_TEXT[(int)Math.max(0,Math.min(8,Math.round((value-1.0)*2.0)))]:BERRY_INT_TEXT[(int)Math.max(0,Math.min(20,value))];
         rounded(c,right-42,y,right-3,y+17,5,0xFF302B39);c.drawText(textRenderer,v,right-37,y+5,TEXT,false);return y+26;
     }
     private void setBerrySlider(int id,double mx){
-        int x=left+158,right=left+panelWidth-22,sx=x+8,ex=right-48;
+        SliderHitboxes.Rect rect=berrySliderHitboxes.get(id);
+        int sx=berryViewportX+rect.x, ex=sx+rect.w;
         double f=Math.max(0,Math.min(1,(mx-sx)/(double)Math.max(1,ex-sx)));
         switch(id){case 0->ModConfig.autoBerryRadius=1.0+Math.round(f*8.0)/2.0;case 2->ModConfig.autoBerryClickDelay=1+(int)Math.round(f*19);case 3->ModConfig.autoBerryRandomDelay=(int)Math.round(f*5);case 4->ModConfig.autoBerryMaxCps=1+(int)Math.round(f*9);case 5->ModConfig.autoBerryScanTicks=1+(int)Math.round(f*19);}
         ModConfig.save();
@@ -398,12 +406,22 @@ public final class T1deedynScreen extends Screen {
         if(selectedTab==3){
             int cy=top+70-scrollPanel.offset();
             if(mx>=x&&mx<=right&&my>=cy&&my<=cy+40){pendingCardHeader=true;pendingCardToggle=mx>=right-70;return true;}
-            if(autoBerryCard.isExpanded()&&mx>=x&&mx<=right&&my>cy+40&&my<cy+40+BERRY_BODY_HEIGHT){
+            if(autoBerryCard.isExpanded() && mx>=berryViewportX && mx<berryViewportX+berryViewportW
+                    && my>=berryViewportY && my<berryViewportY+berryViewportH
+                    && mx>=x && mx<=right && my>cy+40 && my<cy+40+BERRY_BODY_HEIGHT){
+                int contentX=(int)mx-berryViewportX;
+                int contentY=(int)my-berryViewportY+scrollPanel.offset();
+                int sliderId=berrySliderHitboxes.find(contentX,contentY);
+                if(sliderId>=0){
+                    activeSlider=10+sliderId;
+                    sliderDragging=true;
+                    setBerrySlider(sliderId,mx);
+                    return true;
+                }
                 int ry=(int)my+scrollPanel.offset()-(top+70+48);
                 int[] rowStart={20,46,70,96,122,148,194,218,242,286,310,334,358,382,426,450,474,498,522,550};
                 int[] rowEnd={46,70,96,122,148,174,218,242,266,310,334,358,382,406,450,474,498,522,550,580};
                 int hit=-1;for(int i=0;i<rowStart.length;i++)if(ry>=rowStart[i]&&ry<rowEnd[i]){hit=i;break;}
-                if(hit==0||hit==2||hit==3||hit==4||hit==5){activeSlider=10+hit;sliderDragging=true;setBerrySlider(hit,mx);return true;}
                 if(hit==1||hit==6||hit==7||hit==8||hit==9||hit==10||hit==11||hit==12||hit==13||hit==14||hit==15||hit==16||hit==17){toggleBerryOption(hit);return true;}
                 if(hit==18){awaitingBerryKey=true;return true;}
                 if(hit==19){resetBerrySettings();return true;}
