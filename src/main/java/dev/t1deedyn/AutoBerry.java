@@ -61,7 +61,7 @@ public final class AutoBerry extends VisualModule {
     private static long cpsWindowStart;
     private static int clicksInWindow;
     private static int collected;
-    private static int lastScanTick = -1000;
+    private static long lastScanTick = -1000L;
     private static Object lastWorld;
     private static RegistryKey<World> lastDimension;
     private static double previousX, previousY, previousZ;
