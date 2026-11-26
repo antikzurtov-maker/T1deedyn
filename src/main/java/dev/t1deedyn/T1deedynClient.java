@@ -16,6 +16,13 @@ public final class T1deedynClient implements ClientModInitializer {
     private static KeyBinding openMenu;
     private static KeyBinding toggleAutoBerry;
 
+    public static void setAutoBerryKey(int keyCode) {
+        if (toggleAutoBerry != null) {
+            toggleAutoBerry.setBoundKey(InputUtil.Type.KEYSYM.createFromCode(keyCode));
+            KeyBinding.updateKeysByCode();
+        }
+    }
+
     @Override
     public void onInitializeClient() {
         ModConfig.load();
@@ -23,7 +30,7 @@ public final class T1deedynClient implements ClientModInitializer {
                 "key.t1deedyn.open_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X,
                 "category.t1deedyn.main"));
         toggleAutoBerry = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.t1deedyn.auto_berry", InputUtil.Type.KEYSYM, ModConfig.autoBerryToggleKey,
+                "key.t1deedyn.auto_berry", InputUtil.Type.KEYSYM, ModConfig.autoBerryToggleKey < 0 ? GLFW.GLFW_KEY_UNKNOWN : ModConfig.autoBerryToggleKey,
                 "category.t1deedyn.main"));
         AutoBerry.registerTick();
 
