@@ -26,6 +26,7 @@ public final class T1deedynClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ModConfig.load();
+        Theme.select(Theme.Preset.values()[Math.max(0, Math.min(Theme.Preset.values().length - 1, ModConfig.accentTheme))]);
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.t1deedyn.open_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X,
                 "category.t1deedyn.main"));
@@ -38,8 +39,8 @@ public final class T1deedynClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleAutoBerry.wasPressed()) AutoBerry.toggle();
             while (openMenu.wasPressed()) {
-                if (client.currentScreen == null) client.setScreen(new T1deedynScreen());
-                else if (client.currentScreen instanceof T1deedynScreen) client.setScreen(null);
+                if (client.currentScreen == null) client.setScreen(new BlackCloverScreen());
+                else if (client.currentScreen instanceof BlackCloverScreen) client.setScreen(null);
             }
         });
 
