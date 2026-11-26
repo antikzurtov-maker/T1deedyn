@@ -20,11 +20,11 @@ public final class ModConfig {
     public static boolean lowFire = true;
     public static boolean smoothCamera = false;
     public static boolean menuAnimations = true;
-    public static final int uiScale = 1;
+    public static int uiScale = 0; // 0 = Auto, 1..4 = fixed menu GUI scale\n    public static boolean showBounds = false;
     public static double menuOpacity = 0.94;
     public static double backgroundDim = 0.25;
     public static int accentTheme = 0;
-    public static String accentHex = "#9B70FF";
+    public static String accentHex = "#2BE36B";
     public static double accentBrightness = 1.0;
     public static boolean skyVisual = true;
     public static boolean rgbLighting = true;
@@ -80,7 +80,7 @@ public final class ModConfig {
             menuOpacity = clamp(number(j, "menuOpacity", menuOpacity), 0.72, 1.0);
             backgroundDim = clamp(number(j, "backgroundDim", backgroundDim), 0.0, 0.75);
             accentTheme = clampInt(integer(j, "accentTheme", 0), 0, 4);
-            accentHex = validHex(string(j, "accentHex", accentHex)) ? string(j, "accentHex", accentHex).toUpperCase(java.util.Locale.ROOT) : "#9B70FF";
+            accentHex = validHex(string(j, "accentHex", accentHex)) ? string(j, "accentHex", accentHex).toUpperCase(java.util.Locale.ROOT) : "#2BE36B";\n            uiScale = clampInt(integer(j, "uiScale", 0), 0, 4);\n            showBounds = bool(j, "showBounds", false);
             accentBrightness = clamp(number(j, "accentBrightness", 1.0), 0.1, 1.0);
             skyVisual = bool(j, "skyVisual", skyVisual);
             rgbLighting = bool(j, "rgbLighting", rgbLighting);
@@ -137,7 +137,7 @@ public final class ModConfig {
         j.addProperty("lowFire", lowFire);
         j.addProperty("smoothCamera", smoothCamera);
         j.addProperty("menuAnimations", menuAnimations);
-        j.addProperty("uiScale", uiScale);
+        j.addProperty("uiScale", uiScale);\n        j.addProperty("showBounds", showBounds);
         j.addProperty("menuOpacity", menuOpacity);
         j.addProperty("backgroundDim", backgroundDim);
         j.addProperty("accentTheme", accentTheme);
