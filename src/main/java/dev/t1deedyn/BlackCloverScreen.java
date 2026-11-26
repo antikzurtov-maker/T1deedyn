@@ -74,7 +74,7 @@ public final class BlackCloverScreen extends Screen {
             int ty=tabY+i*36;
             boolean hovered=inside(mouseX,mouseY,layout.sidebarX+6,ty,layout.sidebarWidth-12,32);
             if(i==selectedTab)RoundedRect.border(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,1,bright,0x702BE36B);
-            else if(hovered)RoundedRect.fill(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,surface(surface(Theme.CARD)_HOVER));
+            else if(hovered)RoundedRect.fill(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,surface(Theme.CARD_HOVER));
             c.drawText(textRenderer,ICONS[i],layout.sidebarX+15,ty+10,i==selectedTab?Theme.TEXT:Theme.TEXT_DIM,false);
             c.drawText(textRenderer,TABS[i],layout.sidebarX+36,ty+11,i==selectedTab?Theme.TEXT:Theme.TEXT_DIM,false);
         }
