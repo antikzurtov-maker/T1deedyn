@@ -14,7 +14,7 @@ final class VisualHud {
 
     static void render(MinecraftClient client, DrawContext context) {
         if (failed || client == null || client.options == null || client.currentScreen != null) return;
-        if (!ModConfig.showFps && !ModConfig.showPing && !ModConfig.showHudCoordinates) return;
+        if (!ModConfig.showFps && !ModConfig.showPing && !ModConfig.showHudCoordinates && !ModConfig.berryHighlightDebug) return;
         try {
             ClientPlayerEntity player = client.player;
             int y = 6;
@@ -32,7 +32,7 @@ final class VisualHud {
                     }
                 }
             }
-            if (ModConfig.autoBerryCountHud && player != null && client.world != null) {
+            if (ModConfig.berryHighlightDebug && player != null && client.world != null) {\n                context.drawText(client.textRenderer, Text.literal("Ягоды: " + BerryHighlightRenderer.count()), 6, y, 0xFF9FE8C2, true);\n                y += 11;\n            }\n            if (ModConfig.autoBerryCountHud && player != null && client.world != null) {
                 context.drawText(client.textRenderer, Text.literal("Собрано: " + AutoBerry.getCollected()), 6, y, 0xFF9FE8C2, true);
                 y += 11;
             }
