@@ -15,7 +15,7 @@ final class SliderHitboxes {
         for (int i=0;i<rects.length;i++) {
             Rect r=rects[i];
             if (r.w<=0 || r.h<=0) continue;
-            int top=r.y-11, bottom=r.y+r.h+11;
+            int top=r.y, bottom=r.y+r.h;
             if (x<r.x || x>=r.x+r.w || y<top || y>=bottom) continue;
             int center=r.y+r.h/2, distance=Math.abs(y-center);
             if (distance<bestDistance) { best=i; bestDistance=distance; }
