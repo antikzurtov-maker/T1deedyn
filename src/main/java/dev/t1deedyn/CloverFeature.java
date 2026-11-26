@@ -46,7 +46,7 @@ public final class CloverFeature {
             case 2 -> ModConfig.smoothCamera = value;
             case 3 -> ModConfig.skyVisual = value;
             case 4 -> ModConfig.rgbLighting = value;
-            case 5 -> ModConfig.autoBerryEnabled = value;
+            case 5 -> { if (ModConfig.autoBerryEnabled != value) AutoBerry.toggle(); }
             case 6 -> ModConfig.menuAnimations = value;
             case 7 -> ModConfig.cleanHud = value;
             case 8 -> ModConfig.showCoordinates = value;
