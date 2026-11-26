@@ -21,7 +21,16 @@ public final class T1deedynScreen extends Screen {
 
     public T1deedynScreen() { super(Text.literal("T1deedyn")); }
 
-    private int accent() { return ACCENTS[Math.max(0, Math.min(2, ModConfig.accentTheme))]; }
+    private int accent() {
+        if (ModConfig.rgbLighting) {
+            float hue = (System.currentTimeMillis() % 6000L) / 6000.0f;
+            return java.awt.Color.HSBtoRGB(hue, 0.72f, 1.0f) | 0xFF000000;
+        }
+        return ACCENTS[Math.max(0, Math.min(2, ModConfig.accentTheme))];
+    }
+
+    @Override
+    public boolean shouldBlur() { return false; }
     private int panelColor() {
         int a = (int)(Math.max(0.72, Math.min(1.0, ModConfig.menuOpacity)) * 255);
         return (a << 24) | 0x001B1925;
@@ -56,7 +65,14 @@ public final class T1deedynScreen extends Screen {
         c.fill(0, 0, width, height, (dim << 24));
         int slide = ModConfig.menuAnimations ? (int)((1.0f - openProgress) * 10) : 0;
         int py = top + slide;
+        if (ModConfig.skyVisual) drawSky(c, py);
         rounded(c, left, py, left + panelWidth, py + panelHeight, 13, panelColor());
+        if (ModConfig.rgbLighting) {
+            int glow = accent();
+            c.fill(left + 12, py + 5, left + panelWidth - 12, py + 7, glow);
+            c.fill(left + 5, py + 13, left + 7, py + panelHeight - 13, glow);
+            c.fill(left + panelWidth - 7, py + 13, left + panelWidth - 5, py + panelHeight - 13, glow);
+        }
         rounded(c, left + 1, py + 1, left + panelWidth - 1, py + 4, 2, accent());
         rounded(c, left + 1, py + 5, left + 137, py + panelHeight - 1, 10, SIDEBAR);
         c.fill(left + 136, py + 12, left + 137, py + panelHeight - 12, 0xFF393344);
@@ -93,7 +109,9 @@ public final class T1deedynScreen extends Screen {
                 c.drawText(textRenderer, "Декоративные светящиеся точки на фоне меню", x, py + 108, MUTED, false);
                 toggle(c, x, py + 148, contentRight, "Уменьшенный огонь", ModConfig.lowFire);
                 toggle(c, x, py + 188, contentRight, "Плавная камера", ModConfig.smoothCamera);
-                c.drawText(textRenderer, "Игровые эффекты будут подключаться отдельно.", x, py + 235, MUTED, false);
+                toggle(c, x, py + 228, contentRight, "Ночное небо / звёзды", ModConfig.skyVisual);
+                toggle(c, x, py + 268, contentRight, "RGB-подсветка", ModConfig.rgbLighting);
+                toggle(c, x, py + 308, contentRight, "RGB-хвост курсора", ModConfig.cursorTrail);
             }
             case 2 -> {
                 toggle(c, x, py + 88, contentRight, "Чистый HUD", ModConfig.cleanHud);
@@ -132,7 +150,32 @@ public final class T1deedynScreen extends Screen {
 
         c.drawText(textRenderer, "T1deedyn  •  build 0.3.0", x, py + panelHeight - 15, MUTED, false);
         if (selectedTab == 1 && ModConfig.particles) drawParticles(c, mouseX, mouseY);
+        if (ModConfig.cursorTrail) drawCursorTrail(c, mouseX, mouseY);
         super.render(c, mouseX, mouseY, delta);
+    }
+
+    private void drawSky(DrawContext c, int py) {
+        int x1 = left + 139, x2 = left + panelWidth - 5;
+        int y1 = py + 5, y2 = py + panelHeight - 5;
+        c.fill(x1, y1, x2, y2, 0xFF101629);
+        c.fill(x1, y1, x2, y1 + (y2-y1)/2, 0x331B2C54);
+        long t = System.currentTimeMillis() / 180L;
+        for (int i=0;i<34;i++) {
+            int sx=x1+12+(i*53)%(Math.max(1,x2-x1-24));
+            int sy=y1+12+(i*31)%(Math.max(1,y2-y1-24));
+            int a=120+(int)((Math.sin((t+i)*0.12)+1)*60);
+            c.fill(sx,sy,sx+2,sy+2,(a<<24)|0x00DDE8FF);
+        }
+    }
+
+    private void drawCursorTrail(DrawContext c, int mx, int my) {
+        if (mx < left || mx > left + panelWidth || my < top || my > top + panelHeight) return;
+        long t=System.currentTimeMillis()/80L;
+        for(int i=5;i>=0;i--) {
+            int color=java.awt.Color.HSBtoRGB(((t+i*9)%60)/60.0f,0.85f,1.0f);
+            int r=Math.max(1,4-i/2);
+            c.fill(mx-i*3-r,my-i*2-r,mx-i*3+r,my-i*2+r,(0x55<<24)|(color&0x00FFFFFF));
+        }
     }
 
     private void drawParticles(DrawContext c, int mx, int my) {
@@ -208,6 +251,9 @@ public final class T1deedynScreen extends Screen {
                     if (my >= top + 82 && my <= top + 112) { ModConfig.particles = !ModConfig.particles; ModConfig.save(); return true; }
                     if (my >= top + 142 && my <= top + 170) { ModConfig.lowFire = !ModConfig.lowFire; ModConfig.save(); return true; }
                     if (my >= top + 182 && my <= top + 210) { ModConfig.smoothCamera = !ModConfig.smoothCamera; ModConfig.save(); return true; }
+                    if (my >= top + 222 && my <= top + 250) { ModConfig.skyVisual = !ModConfig.skyVisual; ModConfig.save(); return true; }
+                    if (my >= top + 262 && my <= top + 290) { ModConfig.rgbLighting = !ModConfig.rgbLighting; ModConfig.save(); return true; }
+                    if (my >= top + 302 && my <= top + 330) { ModConfig.cursorTrail = !ModConfig.cursorTrail; ModConfig.save(); return true; }
                 }
                 if (selectedTab == 2) {
                     if (my >= top + 82 && my <= top + 112) { ModConfig.cleanHud = !ModConfig.cleanHud; ModConfig.save(); return true; }
