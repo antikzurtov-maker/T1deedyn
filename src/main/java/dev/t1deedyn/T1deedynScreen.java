@@ -252,7 +252,7 @@ public final class T1deedynScreen extends Screen {
         cy=berryToggle(c,x,right,cy,16,"Подсвечивать спелые кусты",ModConfig.autoBerryHighlight);
         cy=berryToggle(c,x,right,cy,17,"Счётчик «Собрано: N»",ModConfig.autoBerryCountHud);
         rounded(c,x,cy+1,right,cy+24,6,0xFF302B39);
-        c.drawText(textRenderer,awaitingBerryKey?"Нажми клавишу (ESC отмена)":(ModConfig.autoBerryToggleKey<0?"Клавиша вкл/выкл: не назначена":"Клавиша вкл/выкл: "+GLFW.glfwGetKeyName(ModConfig.autoBerryToggleKey,0)),x+8,cy+7,TEXT,false);
+        c.drawText(textRenderer,awaitingBerryKey?"Нажми клавишу (ESC отмена)":(ModConfig.autoBerryToggleKey<0?"Клавиша вкл/выкл: не назначена":"Клавиша вкл/выкл: назначена"),x+8,cy+7,TEXT,false);
         cy+=28;
         rounded(c,x,cy+1,right,cy+25,6,0xFF49303B);
         c.drawText(textRenderer,"Сбросить настройки модуля",x+9,cy+8,0xFFFFDCE3,false);
