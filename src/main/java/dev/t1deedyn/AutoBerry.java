@@ -192,9 +192,9 @@ public final class AutoBerry extends VisualModule {
         double radius = ModConfig.autoBerryRadius;
         if (ModConfig.autoBerryLimitReach) radius = Math.min(radius, player.getBlockInteractionRange() + 0.15);
         double radiusSq = radius * radius;
-        int minX = (int)Math.floor(eye.x - radius), maxX = (int)Math.floor(eye.x + radius);
-        int minY = (int)Math.floor(eye.y - radius), maxY = (int)Math.floor(eye.y + radius);
-        int minZ = (int)Math.floor(eye.z - radius), maxZ = (int)Math.floor(eye.z + radius);
+        int minX = (int)Math.floor(EYE[0] - radius), maxX = (int)Math.floor(EYE[0] + radius);
+        int minY = (int)Math.floor(EYE[1] - radius), maxY = (int)Math.floor(EYE[1] + radius);
+        int minZ = (int)Math.floor(EYE[2] - radius), maxZ = (int)Math.floor(EYE[2] + radius);
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
