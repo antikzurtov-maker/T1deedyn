@@ -29,8 +29,6 @@ public final class T1deedynScreen extends Screen {
         return ACCENTS[Math.max(0, Math.min(2, ModConfig.accentTheme))];
     }
 
-    @Override
-    public boolean shouldBlur() { return false; }
     private int panelColor() {
         int a = (int)(Math.max(0.72, Math.min(1.0, ModConfig.menuOpacity)) * 255);
         return (a << 24) | 0x001B1925;
