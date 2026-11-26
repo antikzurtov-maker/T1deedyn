@@ -23,6 +23,8 @@ public final class T1deedynScreen extends Screen {
     private final ModuleCard autoBerryCard = new ModuleCard();
     private boolean awaitingBerryKey;
     private static final int BERRY_BODY_HEIGHT = 620;
+    private static final String[] BERRY_INT_TEXT = {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"};
+    private static final String[] BERRY_RADIUS_TEXT = {"1.0","1.5","2.0","2.5","3.0","3.5","4.0","4.5","5.0"};
     private boolean pendingCardHeader;
     private boolean pendingCardToggle;
     private long lastFrameNanos = System.nanoTime();
@@ -267,7 +269,7 @@ public final class T1deedynScreen extends Screen {
         c.drawText(textRenderer,name,x+5,y+1,TEXT,false);
         int sx=x+8,ex=right-48,ty=y+16;c.fill(sx,ty,ex,ty+3,0xFF403B4A);
         int k=sx+(int)Math.round((ex-sx)*(value-min)/(max-min));c.fill(sx,ty,k,ty+3,accent());c.fill(k-4,ty-3,k+5,ty+8,0xFFF5F0FF);
-        String v=id==0?String.format(java.util.Locale.ROOT,"%.1f",value):Integer.toString((int)value);
+        String v=id==0?BERRY_RADIUS_TEXT[(int)Math.round((value-1.0)*2.0)]:BERRY_INT_TEXT[(int)value];
         rounded(c,right-42,y,right-3,y+17,5,0xFF302B39);c.drawText(textRenderer,v,right-37,y+5,TEXT,false);return y+26;
     }
     private void setBerrySlider(int id,double mx){
