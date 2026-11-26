@@ -177,6 +177,13 @@ public final class BlackCloverScreen extends Screen {
         }
     }
 
+    private void cycleTheme(){
+        Theme.Preset[] presets=Theme.Preset.values();
+        Theme.select(presets[(Theme.selected().ordinal()+1)%presets.length]);
+        ModConfig.accentTheme=Theme.selected().ordinal();
+        ModConfig.save();
+    }
+
     private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int accent){
         int trackY=y+5; c.fill(x,trackY,x+w,trackY+4,Theme.TOGGLE_OFF);
         int knob=x+(int)Math.round((w-8)*(value-min)/(max-min));
@@ -224,6 +231,12 @@ public final class BlackCloverScreen extends Screen {
             if(button==0&&inside(mx,my,right-34,topY+4,28,28)){close();return true;}
             int searchW=Math.max(70,(right-layout.centerX)/3);
             if(button==0&&inside(mx,my,layout.centerX+7,topY+5,searchW,26)){searchFocused=true;return true;}
+            int controlsX=layout.centerX+searchW+18;
+            if(button==0&&right-layout.centerX>440
+                    &&inside(mx,my,Math.min(right-110,controlsX+90),topY+4,76,28)){
+                cycleTheme();
+                return true;
+            }
             int centerW=layout.compact?(right-layout.centerX):layout.centerWidth;
             int listX=layout.centerX+8,listY=layout.contentY+LIST_TOP,listW=centerW-16;
             int listH=Math.max(30,layout.contentHeight-LIST_TOP-8);
@@ -241,9 +254,8 @@ public final class BlackCloverScreen extends Screen {
             if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+12,layout.contentY+173,layout.settingsWidth-24,16)){draggingSlider=0;setSliderValue(0,mx);return true;}
             if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+12,layout.contentY+220,layout.settingsWidth-24,16)){draggingSlider=1;setSliderValue(1,mx);return true;}
             if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+8,layout.contentY+244,layout.settingsWidth-16,34)){
-                Theme.Preset[] presets=Theme.Preset.values();
-                Theme.select(presets[(Theme.selected().ordinal()+1)%presets.length]);
-                ModConfig.accentTheme=Theme.selected().ordinal();ModConfig.save();return true;
+                cycleTheme();
+                return true;
             }
             if(button==0&&!layout.compact&&selectedFeature>=0&&selectedFeature<visibleFeatures.size()){
                 int sx=layout.settingsX+layout.settingsWidth-58,sy=layout.contentY+110;
