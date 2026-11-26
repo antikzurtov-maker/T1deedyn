@@ -16,6 +16,9 @@ public final class ModConfig {
     public static boolean smoothCamera = false;
     public static boolean menuAnimations = true;
     public static double uiScale = 1.0;
+    public static double menuOpacity = 0.94;
+    public static double backgroundDim = 0.48;
+    public static int accentTheme = 0;
 
     private ModConfig() {}
 
@@ -30,8 +33,19 @@ public final class ModConfig {
             lowFire = Boolean.parseBoolean(p.getProperty("lowFire", "true"));
             smoothCamera = Boolean.parseBoolean(p.getProperty("smoothCamera", "false"));
             menuAnimations = Boolean.parseBoolean(p.getProperty("menuAnimations", "true"));
-            uiScale = Math.max(0.75, Math.min(1.25, Double.parseDouble(p.getProperty("uiScale", "1.0"))));
+            uiScale = clamp(parse(p, "uiScale", 1.0), 0.80, 1.15);
+            menuOpacity = clamp(parse(p, "menuOpacity", 0.94), 0.72, 1.0);
+            backgroundDim = clamp(parse(p, "backgroundDim", 0.48), 0.0, 0.75);
+            accentTheme = Math.max(0, Math.min(2, Integer.parseInt(p.getProperty("accentTheme", "0"))));
         } catch (IOException | NumberFormatException ignored) { }
+    }
+
+    private static double parse(Properties p, String key, double fallback) {
+        return Double.parseDouble(p.getProperty(key, Double.toString(fallback)));
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     public static void save() {
@@ -43,6 +57,9 @@ public final class ModConfig {
         p.setProperty("smoothCamera", Boolean.toString(smoothCamera));
         p.setProperty("menuAnimations", Boolean.toString(menuAnimations));
         p.setProperty("uiScale", Double.toString(uiScale));
+        p.setProperty("menuOpacity", Double.toString(menuOpacity));
+        p.setProperty("backgroundDim", Double.toString(backgroundDim));
+        p.setProperty("accentTheme", Integer.toString(accentTheme));
         try {
             Files.createDirectories(FILE.getParent());
             try (OutputStream out = Files.newOutputStream(FILE)) { p.store(out, "T1deedyn settings"); }
