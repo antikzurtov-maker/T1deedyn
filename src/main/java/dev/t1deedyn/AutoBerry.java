@@ -79,6 +79,7 @@ public final class AutoBerry extends VisualModule {
 
     private static void tick(MinecraftClient client) {
         tickCounter++;
+        BerryHighlightRenderer.tick(client);
         try {
             if (!ModConfig.autoBerryEnabled) {
                 clearRuntimeStateIfNeeded();
