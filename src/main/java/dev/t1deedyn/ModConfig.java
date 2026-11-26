@@ -33,6 +33,28 @@ public final class ModConfig {
     public static int effectFps = 30;
     public static int particleLimit = 24;
 
+    public static boolean autoBerryEnabled = false;
+    public static int autoBerryToggleKey = 86;
+    public static double autoBerryRadius = 3.0;
+    public static boolean autoBerryLimitReach = true;
+    public static boolean autoBerrySweet = true;
+    public static boolean autoBerryGlow = true;
+    public static boolean autoBerryStageTwo = false;
+    public static int autoBerryClickDelay = 3;
+    public static int autoBerryRandomDelay = 1;
+    public static int autoBerryMaxCps = 5;
+    public static int autoBerryScanTicks = 5;
+    public static boolean autoBerryOnlyStationary = false;
+    public static boolean autoBerryPauseWithScreen = true;
+    public static boolean autoBerryPauseUsingItem = true;
+    public static boolean autoBerrySafeHand = true;
+    public static boolean autoBerrySwing = true;
+    public static boolean autoBerrySound = true;
+    public static boolean autoBerryParticles = false;
+    public static boolean autoBerryCountHud = true;
+    public static boolean autoBerryHighlight = false;
+    public static boolean autoBerryVisibleOnly = false;
+
     private ModConfig() {}
 
     public static void load() {
@@ -60,6 +82,27 @@ public final class ModConfig {
             autoPerformance = bool(j, "autoPerformance", true);
             effectFps = clampInt(integer(j, "effectFps", 30), 5, 60);
             particleLimit = clampInt(integer(j, "particleLimit", 24), 0, 128);
+            autoBerryEnabled = bool(j, "autoBerryEnabled", false);
+            autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", 86), 32, 348);
+            autoBerryRadius = clamp(number(j, "autoBerryRadius", 3.0), 1.0, 5.0);
+            autoBerryLimitReach = bool(j, "autoBerryLimitReach", true);
+            autoBerrySweet = bool(j, "autoBerrySweet", true);
+            autoBerryGlow = bool(j, "autoBerryGlow", true);
+            autoBerryStageTwo = bool(j, "autoBerryStageTwo", false);
+            autoBerryClickDelay = clampInt(integer(j, "autoBerryClickDelay", 3), 1, 20);
+            autoBerryRandomDelay = clampInt(integer(j, "autoBerryRandomDelay", 1), 0, 5);
+            autoBerryMaxCps = clampInt(integer(j, "autoBerryMaxCps", 5), 1, 10);
+            autoBerryScanTicks = clampInt(integer(j, "autoBerryScanTicks", 5), 1, 20);
+            autoBerryOnlyStationary = bool(j, "autoBerryOnlyStationary", false);
+            autoBerryPauseWithScreen = bool(j, "autoBerryPauseWithScreen", true);
+            autoBerryPauseUsingItem = bool(j, "autoBerryPauseUsingItem", true);
+            autoBerrySafeHand = bool(j, "autoBerrySafeHand", true);
+            autoBerrySwing = bool(j, "autoBerrySwing", true);
+            autoBerrySound = bool(j, "autoBerrySound", true);
+            autoBerryParticles = bool(j, "autoBerryParticles", false);
+            autoBerryCountHud = bool(j, "autoBerryCountHud", true);
+            autoBerryHighlight = bool(j, "autoBerryHighlight", false);
+            autoBerryVisibleOnly = bool(j, "autoBerryVisibleOnly", false);
             int loadedVersion = integer(j, "configVersion", 0);
             if (loadedVersion != CONFIG_VERSION) save();
         } catch (Exception exception) {
@@ -89,6 +132,27 @@ public final class ModConfig {
         j.addProperty("autoPerformance", autoPerformance);
         j.addProperty("effectFps", effectFps);
         j.addProperty("particleLimit", particleLimit);
+        j.addProperty("autoBerryEnabled", autoBerryEnabled);
+        j.addProperty("autoBerryToggleKey", autoBerryToggleKey);
+        j.addProperty("autoBerryRadius", autoBerryRadius);
+        j.addProperty("autoBerryLimitReach", autoBerryLimitReach);
+        j.addProperty("autoBerrySweet", autoBerrySweet);
+        j.addProperty("autoBerryGlow", autoBerryGlow);
+        j.addProperty("autoBerryStageTwo", autoBerryStageTwo);
+        j.addProperty("autoBerryClickDelay", autoBerryClickDelay);
+        j.addProperty("autoBerryRandomDelay", autoBerryRandomDelay);
+        j.addProperty("autoBerryMaxCps", autoBerryMaxCps);
+        j.addProperty("autoBerryScanTicks", autoBerryScanTicks);
+        j.addProperty("autoBerryOnlyStationary", autoBerryOnlyStationary);
+        j.addProperty("autoBerryPauseWithScreen", autoBerryPauseWithScreen);
+        j.addProperty("autoBerryPauseUsingItem", autoBerryPauseUsingItem);
+        j.addProperty("autoBerrySafeHand", autoBerrySafeHand);
+        j.addProperty("autoBerrySwing", autoBerrySwing);
+        j.addProperty("autoBerrySound", autoBerrySound);
+        j.addProperty("autoBerryParticles", autoBerryParticles);
+        j.addProperty("autoBerryCountHud", autoBerryCountHud);
+        j.addProperty("autoBerryHighlight", autoBerryHighlight);
+        j.addProperty("autoBerryVisibleOnly", autoBerryVisibleOnly);
         try {
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, GSON.toJson(j));
