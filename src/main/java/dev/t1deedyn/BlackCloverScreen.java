@@ -101,7 +101,11 @@ public final class BlackCloverScreen extends Screen {
         c.drawText(textRenderer,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,bright,false);
     }
 
-    private void drawCentered(DrawContext c,String value,int centerX,int y,int color){\n        c.drawText(textRenderer,value,centerX-textRenderer.getWidth(value)/2,y,color,false);\n    }\n\n    @Override public boolean mouseClicked(double mx,double my,int button){
+    private void drawCentered(DrawContext c,String value,int centerX,int y,int color){
+        c.drawText(textRenderer,value,centerX-textRenderer.getWidth(value)/2,y,color,false);
+    }
+
+    @Override public boolean mouseClicked(double mx,double my,int button){
         if(layout==null)layout=new UiLayout(width,height);
         int x=layout.x,y=layout.y;
         if(button==0){
