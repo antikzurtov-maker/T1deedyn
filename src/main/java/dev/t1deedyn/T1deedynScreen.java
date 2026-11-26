@@ -20,6 +20,9 @@ public final class T1deedynScreen extends Screen {
     private int activeSlider = -1;
     private float openProgress;
         private final ScrollPanel scrollPanel = new ScrollPanel();
+    private final ModuleCard autoBerryCard = new ModuleCard();
+    private boolean awaitingBerryKey;
+    private static final int BERRY_BODY_HEIGHT = 520;
     private long lastFrameNanos = System.nanoTime();
     private boolean contentDragConsumed;
     private Integer previousMenuBlur;
@@ -66,6 +69,7 @@ public final class T1deedynScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (awaitingBerryKey) { awaitingBerryKey=false; if(keyCode!=GLFW.GLFW_KEY_ESCAPE){ModConfig.autoBerryToggleKey=keyCode; T1deedynClient.setAutoBerryKey(keyCode); ModConfig.save();} return true; }
         if (keyCode == GLFW.GLFW_KEY_X || keyCode == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
         if (scrollPanel.key(keyCode)) return true;
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -126,7 +130,8 @@ public final class T1deedynScreen extends Screen {
         int contentRight = left + panelWidth - 22;
         int viewportY = py + 66;
         int viewportH = Math.max(32, panelHeight - 104);
-        int contentH = switch (selectedTab) { case 1 -> 230; case 2 -> 170; case 3 -> 69 + 20 * 22 + 20; case 4 -> 150; case 5 -> 220; case 6 -> 300; default -> 300; };
+        if(selectedTab==3) autoBerryCard.tick();
+        int contentH = switch (selectedTab) { case 1 -> 230; case 2 -> 170; case 3 -> 110 + autoBerryCard.animatedContentHeight(BERRY_BODY_HEIGHT); case 4 -> 150; case 5 -> 220; case 6 -> 300; default -> 300; };
         scrollPanel.layout(selectedTab, x - 8, viewportY, contentRight - x + 16, viewportH, contentH);
         long frameNow = System.nanoTime();
         scrollPanel.tick(Math.min(0.1, (frameNow - lastFrameNanos) / 1_000_000_000.0));
@@ -212,91 +217,72 @@ public final class T1deedynScreen extends Screen {
 
 
     private void drawGameSettings(DrawContext c, int x, int py, int right, int mouseX, int mouseY) {
-        c.drawText(textRenderer, "AutoBerry  •  V — вкл/выкл", x, py + 51, MUTED, false);
-        for (int i = 0; i < 20; i++) {
-            int index = i;
-            int y = py + 69 + i * 22;
-            if ((i & 1) == 0) c.fill(x - 5, y - 3, right, y + 17, 0x331F1B2A);
-            c.drawText(textRenderer, gameSettingName(index), x, y, TEXT, false);
-            String value = gameSettingValue(index);
-            c.drawText(textRenderer, value, right - textRenderer.getWidth(value), y, accent(), false);
-        }
-        int hovered = (int)((mouseY - (py + 69)) / 22.0) + scrollPanel.offset() / 22;
-        String hint = mouseX >= x && mouseX <= right && hovered >= 0 && hovered < 20 ? gameSettingHint(hovered) : "Колесо мыши: прокрутка  •  нажми строку для изменения";
-        c.drawText(textRenderer, hint, x, py + panelHeight - 28, MUTED, false);
+        int y=py+70;
+        autoBerryCard.renderHeader(c,x,y,right-x,accent(),ModConfig.autoBerryEnabled,
+                mouseX>=x&&mouseX<=right&&mouseY>=y-scrollPanel.offset()&&mouseY<=y+40-scrollPanel.offset(),mouseX,mouseY);
+        int h=autoBerryCard.animatedContentHeight(BERRY_BODY_HEIGHT);
+        if(h<=0)return;
+        c.enableScissor(x,y+40,right,y+40+h);
+        int cy=y+48;
+        cy=berrySection(c,x,cy,"ОСНОВНОЕ");
+        cy=berrySlider(c,x,right,cy,0,"Радиус, блоков",ModConfig.autoBerryRadius,1,5);
+        cy=berryToggle(c,x,right,cy,1,"Ограничить дальностью игры",ModConfig.autoBerryLimitReach);
+        cy=berrySlider(c,x,right,cy,2,"Задержка между кликами, тики",ModConfig.autoBerryClickDelay,1,20);
+        cy=berrySlider(c,x,right,cy,3,"Случайность задержки, тики",ModConfig.autoBerryRandomDelay,0,5);
+        cy=berrySlider(c,x,right,cy,4,"Макс. кликов в секунду",ModConfig.autoBerryMaxCps,1,10);
+        cy=berrySlider(c,x,right,cy,5,"Частота сканирования, тики",ModConfig.autoBerryScanTicks,1,20);
+        cy=berrySection(c,x,cy,"ЧТО СОБИРАТЬ");
+        cy=berryToggle(c,x,right,6,"Сладкие ягоды",ModConfig.autoBerrySweet);
+        cy=berryToggle(c,x,right,7,"Светящиеся ягоды",ModConfig.autoBerryGlow);
+        cy=berryToggle(c,x,right,8,"Минимальная стадия: "+(ModConfig.autoBerryStageTwo?"С 2-й стадии":"Только спелые"),ModConfig.autoBerryStageTwo);
+        cy=berrySection(c,x,cy,"БЕЗОПАСНОСТЬ");
+        cy=berryToggle(c,x,right,9,"Безопасный режим руки",ModConfig.autoBerrySafeHand);
+        cy=berryToggle(c,x,right,10,"Только если стою на месте",ModConfig.autoBerryOnlyStationary);
+        cy=berryToggle(c,x,right,11,"Не работать при открытом экране",ModConfig.autoBerryPauseWithScreen);
+        cy=berryToggle(c,x,right,12,"Не работать при использовании предмета",ModConfig.autoBerryPauseUsingItem);
+        cy=berryToggle(c,x,right,13,"Видимость цели, raycast",ModConfig.autoBerryVisibleOnly);
+        cy=berrySection(c,x,cy,"ЭФФЕКТЫ И ИНТЕРФЕЙС");
+        cy=berryToggle(c,x,right,14,"Взмах руки",ModConfig.autoBerrySwing);
+        cy=berryToggle(c,x,right,15,"Частицы на собранном кусте",ModConfig.autoBerryParticles);
+        cy=berryToggle(c,x,right,16,"Подсвечивать спелые кусты",ModConfig.autoBerryHighlight);
+        cy=berryToggle(c,x,right,17,"Счётчик «Собрано: N»",ModConfig.autoBerryCountHud);
+        rounded(c,x,cy+1,right,cy+24,6,0xFF302B39);
+        c.drawText(textRenderer,awaitingBerryKey?"Нажми клавишу (ESC отмена)":(ModConfig.autoBerryToggleKey<0?"Клавиша вкл/выкл: не назначена":"Клавиша вкл/выкл: "+GLFW.glfwGetKeyName(ModConfig.autoBerryToggleKey,0)),x+8,cy+7,TEXT,false);
+        cy+=28;
+        rounded(c,x,cy+1,right,cy+25,6,0xFF49303B);
+        c.drawText(textRenderer,"Сбросить настройки модуля",x+9,cy+8,0xFFFFDCE3,false);
+        c.disableScissor();
     }
-    private String gameSettingHint(int i) {
-        return switch (i) {
-            case 0 -> "Автосбор включается отдельно; V переключает функцию.";
-            case 1 -> "Радиус от глаз игрока: 1.0–5.0 блока, шаг 0.5.";
-            case 2 -> "Радиус ограничивается атрибутом дальности + небольшой запас.";
-            case 3 -> "Собирать обычные кусты сладких ягод.";
-            case 4 -> "Собирать светящиеся пещерные лозы с ягодами.";
-            case 5 -> "Вторая стадия даёт меньше ягод, чем полностью спелый куст.";
-            case 6 -> "Интервал между кликами: 0 = каждый игровой тик.";
-            case 7 -> "К базовой задержке добавляется случайное число от 0 до N.";
-            case 8 -> "Предел до 20 кликов/с, ограничен одним действием за тик.";
-            case 9 -> "Частота поиска: 1 тик для быстрой фермы.";
-            case 10 -> "Пока игрок движется, клики и поиск целей приостанавливаются.";
-            case 11 -> "Пауза в инвентаре, чате и любом другом открытом экране.";
-            case 12 -> "Не собирать во время еды, натягивания лука или блокирования.";
-            case 13 -> "Не кликает с костной мукой, блоками, ведрами и метаемыми предметами.";
-            case 14 -> "Проигрывать обычную анимацию взмаха главной руки.";
-            case 15 -> "Ванильный звук сбора остаётся; настройка для доп. звуков мода.";
-            case 16 -> "Добавлять частицу на месте успешно обработанного куста.";
-            case 17 -> "Показывать счётчик собранных кустов на HUD.";
-            case 18 -> "Редкая частица рядом с созревшими кустами, без шейдеров.";
-            default -> "Проверять лучом, что между глазами и кустом нет блоков.";
-        };
+
+    private int berrySection(DrawContext c,int x,int y,String name){c.drawText(textRenderer,name,x+3,y+2,0xFF9690A2,false);return y+20;}
+    private int berryToggle(DrawContext c,int x,int right,int y,int id,String name,boolean on){
+        c.drawText(textRenderer,name,x+5,y+5,ModConfig.autoBerryEnabled?TEXT:0xB3F5F2FF,false);
+        int tx=right-40;c.fill(tx,y+4,tx+32,y+20,on?accent():0xFF484451);
+        int k=on?tx+18:tx+2;c.fill(k,y+6,k+12,y+18,0xFFF7F4FF);return y+24;
     }
-    private String gameSettingName(int i) {
-        return switch (i) {
-            case 0 -> "Включено"; case 1 -> "Радиус"; case 2 -> "Ограничить дальностью";
-            case 3 -> "Сладкие ягоды"; case 4 -> "Светящиеся ягоды"; case 5 -> "Минимальная стадия";
-            case 6 -> "Задержка клика"; case 7 -> "Случайность задержки"; case 8 -> "Макс. кликов/сек";
-            case 9 -> "Частота сканирования"; case 10 -> "Только стоя на месте";
-            case 11 -> "Пауза при открытом экране"; case 12 -> "Пауза при использовании";
-            case 13 -> "Безопасный режим руки"; case 14 -> "Взмах руки"; case 15 -> "Доп. звук";
-            case 16 -> "Частицы сбора"; case 17 -> "Счётчик HUD"; case 18 -> "Подсветка кустов";
-            default -> "Только видимые цели";
-        };
+    private int berrySlider(DrawContext c,int x,int right,int y,int id,String name,double value,double min,double max){
+        c.drawText(textRenderer,name,x+5,y+1,TEXT,false);
+        int sx=x+8,ex=right-48,ty=y+16;c.fill(sx,ty,ex,ty+3,0xFF403B4A);
+        int k=sx+(int)Math.round((ex-sx)*(value-min)/(max-min));c.fill(sx,ty,k,ty+3,accent());c.fill(k-4,ty-3,k+5,ty+8,0xFFF5F0FF);
+        String v=id==0?String.format(java.util.Locale.ROOT,"%.1f",value):Integer.toString((int)value);
+        rounded(c,right-42,y,right-3,y+17,5,0xFF302B39);c.drawText(textRenderer,v,right-37,y+5,TEXT,false);return y+26;
     }
-    private String gameSettingValue(int i) {
-        return switch (i) {
-            case 0 -> onOff(ModConfig.autoBerryEnabled); case 1 -> String.format(java.util.Locale.ROOT, "%.1f", ModConfig.autoBerryRadius);
-            case 2 -> onOff(ModConfig.autoBerryLimitReach); case 3 -> onOff(ModConfig.autoBerrySweet);
-            case 4 -> onOff(ModConfig.autoBerryGlow); case 5 -> ModConfig.autoBerryStageTwo ? "С 2-й стадии" : "Только спелые (3)";
-            case 6 -> ModConfig.autoBerryClickDelay + " т."; case 7 -> ModConfig.autoBerryRandomDelay + " т.";
-            case 8 -> Integer.toString(ModConfig.autoBerryMaxCps); case 9 -> ModConfig.autoBerryScanTicks + " т.";
-            case 10 -> onOff(ModConfig.autoBerryOnlyStationary); case 11 -> onOff(ModConfig.autoBerryPauseWithScreen);
-            case 12 -> onOff(ModConfig.autoBerryPauseUsingItem); case 13 -> onOff(ModConfig.autoBerrySafeHand);
-            case 14 -> onOff(ModConfig.autoBerrySwing); case 15 -> onOff(ModConfig.autoBerrySound);
-            case 16 -> onOff(ModConfig.autoBerryParticles); case 17 -> onOff(ModConfig.autoBerryCountHud);
-            case 18 -> onOff(ModConfig.autoBerryHighlight); default -> onOff(ModConfig.autoBerryVisibleOnly);
-        };
-    }
-    private String onOff(boolean value) { return value ? "ВКЛ" : "ВЫКЛ"; }
-    private void changeGameSetting(int i) {
-        switch (i) {
-            case 0 -> AutoBerry.toggle(); case 1 -> ModConfig.autoBerryRadius = ModConfig.autoBerryRadius >= 5.0 ? 1.0 : ModConfig.autoBerryRadius + 0.5;
-            case 2 -> ModConfig.autoBerryLimitReach = !ModConfig.autoBerryLimitReach;
-            case 3 -> ModConfig.autoBerrySweet = !ModConfig.autoBerrySweet; case 4 -> ModConfig.autoBerryGlow = !ModConfig.autoBerryGlow;
-            case 5 -> ModConfig.autoBerryStageTwo = !ModConfig.autoBerryStageTwo;
-            case 6 -> ModConfig.autoBerryClickDelay = cycle(ModConfig.autoBerryClickDelay, 0, 20);
-            case 7 -> ModConfig.autoBerryRandomDelay = cycle(ModConfig.autoBerryRandomDelay, 0, 5);
-            case 8 -> ModConfig.autoBerryMaxCps = cycle(ModConfig.autoBerryMaxCps, 1, 20);
-            case 9 -> ModConfig.autoBerryScanTicks = cycle(ModConfig.autoBerryScanTicks, 1, 20);
-            case 10 -> ModConfig.autoBerryOnlyStationary = !ModConfig.autoBerryOnlyStationary;
-            case 11 -> ModConfig.autoBerryPauseWithScreen = !ModConfig.autoBerryPauseWithScreen;
-            case 12 -> ModConfig.autoBerryPauseUsingItem = !ModConfig.autoBerryPauseUsingItem;
-            case 13 -> ModConfig.autoBerrySafeHand = !ModConfig.autoBerrySafeHand;
-            case 14 -> ModConfig.autoBerrySwing = !ModConfig.autoBerrySwing; case 15 -> ModConfig.autoBerrySound = !ModConfig.autoBerrySound;
-            case 16 -> ModConfig.autoBerryParticles = !ModConfig.autoBerryParticles; case 17 -> ModConfig.autoBerryCountHud = !ModConfig.autoBerryCountHud;
-            case 18 -> ModConfig.autoBerryHighlight = !ModConfig.autoBerryHighlight; case 19 -> ModConfig.autoBerryVisibleOnly = !ModConfig.autoBerryVisibleOnly;
-        }
+    private void setBerrySlider(int id,double mx){
+        int x=left+158,right=left+panelWidth-22,sx=x+8,ex=right-48;
+        double f=Math.max(0,Math.min(1,(mx-sx)/(double)Math.max(1,ex-sx)));
+        switch(id){case 0->ModConfig.autoBerryRadius=1.0+Math.round(f*8.0)/2.0;case 2->ModConfig.autoBerryClickDelay=1+(int)Math.round(f*19);case 3->ModConfig.autoBerryRandomDelay=(int)Math.round(f*5);case 4->ModConfig.autoBerryMaxCps=1+(int)Math.round(f*9);case 5->ModConfig.autoBerryScanTicks=1+(int)Math.round(f*19);}
         ModConfig.save();
     }
-    private int cycle(int value, int min, int max) { return value >= max ? min : value + 1; }
+    private void toggleBerryOption(int id){
+        switch(id){case 1->ModConfig.autoBerryLimitReach=!ModConfig.autoBerryLimitReach;case 6->ModConfig.autoBerrySweet=!ModConfig.autoBerrySweet;case 7->ModConfig.autoBerryGlow=!ModConfig.autoBerryGlow;case 8->ModConfig.autoBerryStageTwo=!ModConfig.autoBerryStageTwo;case 9->ModConfig.autoBerrySafeHand=!ModConfig.autoBerrySafeHand;case 10->ModConfig.autoBerryOnlyStationary=!ModConfig.autoBerryOnlyStationary;case 11->ModConfig.autoBerryPauseWithScreen=!ModConfig.autoBerryPauseWithScreen;case 12->ModConfig.autoBerryPauseUsingItem=!ModConfig.autoBerryPauseUsingItem;case 13->ModConfig.autoBerryVisibleOnly=!ModConfig.autoBerryVisibleOnly;case 14->ModConfig.autoBerrySwing=!ModConfig.autoBerrySwing;case 15->ModConfig.autoBerryParticles=!ModConfig.autoBerryParticles;case 16->ModConfig.autoBerryHighlight=!ModConfig.autoBerryHighlight;case 17->ModConfig.autoBerryCountHud=!ModConfig.autoBerryCountHud;}
+        ModConfig.save();
+    }
+    private void resetBerrySettings(){
+        ModConfig.autoBerryEnabled=false;ModConfig.autoBerryRadius=3.0;ModConfig.autoBerryLimitReach=true;ModConfig.autoBerryClickDelay=3;ModConfig.autoBerryRandomDelay=1;ModConfig.autoBerryMaxCps=5;ModConfig.autoBerryScanTicks=5;
+        ModConfig.autoBerrySweet=true;ModConfig.autoBerryGlow=true;ModConfig.autoBerryStageTwo=false;ModConfig.autoBerrySafeHand=true;ModConfig.autoBerryOnlyStationary=false;ModConfig.autoBerryPauseWithScreen=true;ModConfig.autoBerryPauseUsingItem=true;ModConfig.autoBerryVisibleOnly=false;
+        ModConfig.autoBerrySwing=true;ModConfig.autoBerryParticles=false;ModConfig.autoBerryHighlight=false;ModConfig.autoBerryCountHud=true;ModConfig.autoBerryToggleKey=-1;
+        T1deedynClient.setAutoBerryKey(-1);ModConfig.save();
+    }
 
     private void drawSky(DrawContext c, int py) {
         int x1 = left + 139, x2 = left + panelWidth - 5;
@@ -364,6 +350,7 @@ public final class T1deedynScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        if(button==1&&selectedTab==3){int cx=left+158,cr=left+panelWidth-22,cy=top+70-scrollPanel.offset();if(mx>=cx&&mx<=cr&&my>=cy&&my<=cy+40){AutoBerry.toggle();return true;}}
         if (button != 0) return super.mouseClicked(mx, my, button);
         if (mx >= left + 145 && mx <= left + panelWidth - 10 && my >= top + 65 && my <= top + panelHeight - 38) scrollPanel.mouseDown(mx, my);
         if (mx >= left && mx <= left + panelWidth && my >= top && my <= top + 48) {
@@ -395,9 +382,21 @@ public final class T1deedynScreen extends Screen {
                 if (selectedTab == 4 && my >= top + 82 && my <= top + 112) { ModConfig.menuAnimations = !ModConfig.menuAnimations; ModConfig.save(); return true; }
             }
         }
-        if (selectedTab == 3 && mx >= x && mx <= right && my >= top + 66 && my <= top + panelHeight - 25) {
-            int row = (int)((my - (top + 69)) / 22.0) + scrollPanel.offset() / 22;
-            if (row >= 0 && row < 20) { changeGameSetting(row); return true; }
+        if(selectedTab==3){
+            int cy=top+70-scrollPanel.offset();
+            if(mx>=x&&mx<=right&&my>=cy&&my<=cy+40){
+                if(mx>=right-70){AutoBerry.toggle();return true;}
+                autoBerryCard.toggle();return true;
+            }
+            if(autoBerryCard.isExpanded()&&mx>=x&&mx<=right&&my>cy+40&&my<cy+40+BERRY_BODY_HEIGHT){
+                int ry=(int)my+scrollPanel.offset()-(top+70+48);
+                int[] rowY={20,46,70,96,122,148,168,192,216,236,260,284,308,332,352,376,400,424,448,476};
+                int hit=-1;for(int i=0;i<rowY.length-1;i++)if(ry>=rowY[i]&&ry<rowY[i+1]){hit=i;break;}
+                if(hit==0||hit==2||hit==3||hit==4||hit==5){activeSlider=10+hit;sliderDragging=true;setBerrySlider(hit,mx);return true;}
+                if(hit==1||hit==6||hit==7||hit==8||hit==9||hit==10||hit==11||hit==12||hit==13||hit==14||hit==15||hit==16||hit==17){toggleBerryOption(hit);return true;}
+                if(hit==18){awaitingBerryKey=true;return true;}
+                if(hit==19){resetBerrySettings();return true;}
+            }
         }
         if (selectedTab == 5 && my >= top + 110 && my <= top + 158) {
             if (mx >= x && mx <= x + 50) ModConfig.accentTheme = 0;
@@ -419,7 +418,7 @@ public final class T1deedynScreen extends Screen {
     }
 
     @Override public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
-        if (sliderDragging && button == 0) { setSlider(mx); return true; }
+        if (sliderDragging && button == 0) { if(activeSlider>=10)setBerrySlider(activeSlider-10,mx);else setSlider(mx); return true; }
         if (button == 0 && scrollPanel.mouseMove(mx, my)) { contentDragConsumed = true; return true; }
         if (dragging && button == 0) {
             left = Math.max(0, Math.min(width - panelWidth, (int)Math.round(mx - dragOffsetX)));
