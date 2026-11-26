@@ -128,7 +128,7 @@ public final class AutoBerry extends VisualModule {
                 cleanExpiredMaps(world, player);
             }
 
-            if (tickCounter - lastScanTick >= ModConfig.autoBerryScanTicks) {
+            if (tickCounter - lastScanTick >= Math.max(1, ModConfig.autoBerryScanTicks)) {
                 scan(client, player, world);
                 lastScanTick = tickCounter;
             }
@@ -158,7 +158,7 @@ public final class AutoBerry extends VisualModule {
                 RECENTLY_CLICKED.put(key, tickCounter + 20);
                 TARGETS.remove(0);
                 clicksInWindow++;
-                nextClickTick = tickCounter + ModConfig.autoBerryClickDelay
+                nextClickTick = tickCounter + Math.max(0, ModConfig.autoBerryClickDelay)
                         + (ModConfig.autoBerryRandomDelay > 0 ? RANDOM.nextInt(ModConfig.autoBerryRandomDelay + 1) : 0);
                 if (ModConfig.autoBerryCountHud) collected++;
                 if (ModConfig.autoBerryParticles) {
