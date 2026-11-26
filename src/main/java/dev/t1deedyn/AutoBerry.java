@@ -140,7 +140,7 @@ public final class AutoBerry extends VisualModule {
             BlockPos target = TARGETS.get(0);
             BlockState state = world.getBlockState(target);
             if (!isReadyBerry(state)) {
-                TARGETS.remove(0);
+                removeFirstTarget();
                 return;
             }
 
@@ -185,8 +185,7 @@ public final class AutoBerry extends VisualModule {
 
     private static void scan(MinecraftClient client, ClientPlayerEntity player, World world) {
         TARGETS.clear();
-        Vec3d eye = player.getEyePos();
-        EYE[0] = eye.x; EYE[1] = eye.y; EYE[2] = eye.z;
+        EYE[0] = player.getX(); EYE[1] = player.getEyeY(); EYE[2] = player.getZ();
         double radius = ModConfig.autoBerryRadius;
         if (ModConfig.autoBerryLimitReach) radius = Math.min(radius, player.getBlockInteractionRange() + 0.15);
         double radiusSq = radius * radius;
@@ -210,8 +209,9 @@ public final class AutoBerry extends VisualModule {
                     long key = BlockPos.asLong(x, y, z);
                     if (RECENTLY_CLICKED.containsKey(key) || BLACKLIST.containsKey(key)) continue;
                     if (ModConfig.autoBerryVisibleOnly) {
+                        Vec3d start = new Vec3d(EYE[0], EYE[1], EYE[2]);
                         Vec3d hit = new Vec3d(x + 0.5, y + 0.5, z + 0.5);
-                        BlockHitResult ray = world.raycast(new RaycastContext(eye, hit,
+                        BlockHitResult ray = world.raycast(new RaycastContext(start, hit,
                                 RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, player));
                         if (!ray.getBlockPos().equals(SCAN_POS)) continue;
                     }
@@ -225,19 +225,27 @@ public final class AutoBerry extends VisualModule {
     }
 
     private static void insertTarget(BlockPos pos, double distanceSq) {
-        if (TARGETS.size() == MAX_TARGETS && distanceSq >= TARGET_DISTANCES[MAX_TARGETS - 1]) return;
-        int index = TARGETS.size();
-        if (index == MAX_TARGETS) index--;
+        int size = TARGETS.size();
+        if (size == MAX_TARGETS && distanceSq >= TARGET_DISTANCES[size - 1]) return;
+        int index = size < MAX_TARGETS ? size : size - 1;
+        if (size < MAX_TARGETS) TARGETS.add(pos); else TARGETS.set(index, pos);
         while (index > 0 && TARGET_DISTANCES[index - 1] > distanceSq) {
-            if (index < MAX_TARGETS) {
-                TARGET_DISTANCES[index] = TARGET_DISTANCES[index - 1];
-                if (index < TARGETS.size()) TARGETS.set(index, TARGETS.get(index - 1));
-            }
+            TARGETS.set(index, TARGETS.get(index - 1));
+            TARGET_DISTANCES[index] = TARGET_DISTANCES[index - 1];
             index--;
         }
-        if (TARGETS.size() < MAX_TARGETS) TARGETS.add(pos);
-        else TARGETS.set(index, pos);
+        TARGETS.set(index, pos);
         TARGET_DISTANCES[index] = distanceSq;
+    }
+
+    private static void removeFirstTarget() {
+        int size = TARGETS.size();
+        if (size == 0) return;
+        for (int i = 1; i < size; i++) {
+            TARGETS.set(i - 1, TARGETS.get(i));
+            TARGET_DISTANCES[i - 1] = TARGET_DISTANCES[i];
+        }
+        TARGETS.remove(size - 1);
     }
 
     private static boolean isReadyBerry(BlockState state) {
@@ -289,6 +297,7 @@ public final class AutoBerry extends VisualModule {
     }
 
     private static void cleanExpiredMaps(World world, ClientPlayerEntity player) {
+        if (!RECENTLY_CLICKED.isEmpty()) {
         Iterator<Map.Entry<Long, Long>> recent = RECENTLY_CLICKED.entrySet().iterator();
         while (recent.hasNext()) {
             Map.Entry<Long, Long> entry = recent.next();
@@ -306,8 +315,11 @@ public final class AutoBerry extends VisualModule {
             }
             recent.remove();
         }
+        }
+        if (!BLACKLIST.isEmpty()) {
         Iterator<Map.Entry<Long, Long>> blocked = BLACKLIST.entrySet().iterator();
         while (blocked.hasNext()) if (blocked.next().getValue() <= tickCounter) blocked.remove();
+        }
     }
 
     private static void rememberPosition(ClientPlayerEntity player) {
