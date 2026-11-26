@@ -9,7 +9,7 @@ public final class T1deedynScreen extends Screen {
     private static final int TEXT = 0xFFF5F2FF;
     private static final int MUTED = 0xFFAAA5B8;
     private static final int SIDEBAR = 0xFF15131D;
-    private static final String[] TABS = {"Главная", "Визуал", "HUD", "Анимации", "Темы", "Настройки"};
+    private static final String[] TABS = {"Главная", "Визуал", "HUD", "Игра", "Анимации", "Темы", "Настройки"};
     private static final int[] ACCENTS = {0xFF9B70FF, 0xFF62A0FF, 0xFF54D6B0};
     private static final String[] THEME_NAMES = {"Violet", "Ocean", "Mint"};
 
@@ -18,6 +18,7 @@ public final class T1deedynScreen extends Screen {
     private double dragOffsetX, dragOffsetY;
     private int activeSlider = -1;
     private float openProgress;
+    private int gameScroll;
 
     public T1deedynScreen() { super(Text.literal("T1deedyn")); }
 
@@ -93,9 +94,10 @@ public final class T1deedynScreen extends Screen {
         String heading = switch (selectedTab) {
             case 1 -> "Визуальные эффекты";
             case 2 -> "Настройка HUD";
-            case 3 -> "Анимации";
-            case 4 -> "Оформление меню";
-            case 5 -> "Настройки интерфейса";
+            case 3 -> "Игра / AutoBerry";
+            case 4 -> "Анимации";
+            case 5 -> "Оформление меню";
+            case 6 -> "Настройки интерфейса";
             default -> "Главная панель";
         };
         c.drawText(textRenderer, heading, x, py + 22, TEXT, false);
@@ -115,11 +117,12 @@ public final class T1deedynScreen extends Screen {
                 toggle(c, x, py + 132, contentRight, "Показывать координаты", ModConfig.showCoordinates);
                 c.drawText(textRenderer, "Переключатели HUD пока сохраняют настройки.", x, py + 190, MUTED, false);
             }
-            case 3 -> {
+            case 3 -> drawGameSettings(c, x, py, contentRight);
+            case 4 -> {
                 toggle(c, x, py + 88, contentRight, "Анимация открытия", ModConfig.menuAnimations);
                 c.drawText(textRenderer, "Плавное появление и смещение панели.", x, py + 111, MUTED, false);
             }
-            case 4 -> {
+            case 5 -> {
                 c.drawText(textRenderer, "Цветовая тема", x, py + 88, TEXT, false);
                 rounded(c, x, py + 116, x + 48, py + 151, 8, ACCENTS[0]);
                 rounded(c, x + 59, py + 116, x + 107, py + 151, 8, ACCENTS[1]);
@@ -127,7 +130,7 @@ public final class T1deedynScreen extends Screen {
                 c.drawText(textRenderer, "Активная: " + THEME_NAMES[ModConfig.accentTheme], x, py + 164, MUTED, false);
                 c.drawText(textRenderer, "Нажми на цвет, чтобы применить тему.", x, py + 190, MUTED, false);
             }
-            case 5 -> {
+            case 6 -> {
                 c.drawText(textRenderer, "Масштаб меню", x, py + 82, TEXT, false);
                 c.drawText(textRenderer, "1x (целый масштаб)", x, py + 108, MUTED, false);
                 c.drawText(textRenderer, "Непрозрачность панели", x, py + 151, TEXT, false);
@@ -149,6 +152,69 @@ public final class T1deedynScreen extends Screen {
         if (selectedTab == 1 && ModConfig.particles) drawParticles(c, mouseX, mouseY);
         super.render(c, mouseX, mouseY, delta);
     }
+
+
+    private void drawGameSettings(DrawContext c, int x, int py, int right) {
+        c.drawText(textRenderer, "AutoBerry  •  V — вкл/выкл", x, py + 51, MUTED, false);
+        for (int i = 0; i < 12; i++) {
+            int index = gameScroll + i;
+            if (index >= 20) break;
+            int y = py + 69 + i * 22;
+            if ((i & 1) == 0) c.fill(x - 5, y - 3, right, y + 17, 0x331F1B2A);
+            c.drawText(textRenderer, gameSettingName(index), x, y, TEXT, false);
+            String value = gameSettingValue(index);
+            c.drawText(textRenderer, value, right - textRenderer.getWidth(value), y, accent(), false);
+        }
+        c.drawText(textRenderer, "Колесо мыши: прокрутка  •  нажми строку для изменения", x, py + panelHeight - 28, MUTED, false);
+    }
+    private String gameSettingName(int i) {
+        return switch (i) {
+            case 0 -> "Включено"; case 1 -> "Радиус"; case 2 -> "Ограничить дальностью";
+            case 3 -> "Сладкие ягоды"; case 4 -> "Светящиеся ягоды"; case 5 -> "Минимальная стадия";
+            case 6 -> "Задержка клика"; case 7 -> "Случайность задержки"; case 8 -> "Макс. кликов/сек";
+            case 9 -> "Частота сканирования"; case 10 -> "Только стоя на месте";
+            case 11 -> "Пауза при открытом экране"; case 12 -> "Пауза при использовании";
+            case 13 -> "Безопасный режим руки"; case 14 -> "Взмах руки"; case 15 -> "Доп. звук";
+            case 16 -> "Частицы сбора"; case 17 -> "Счётчик HUD"; case 18 -> "Подсветка кустов";
+            default -> "Только видимые цели";
+        };
+    }
+    private String gameSettingValue(int i) {
+        return switch (i) {
+            case 0 -> onOff(ModConfig.autoBerryEnabled); case 1 -> String.format(java.util.Locale.ROOT, "%.1f", ModConfig.autoBerryRadius);
+            case 2 -> onOff(ModConfig.autoBerryLimitReach); case 3 -> onOff(ModConfig.autoBerrySweet);
+            case 4 -> onOff(ModConfig.autoBerryGlow); case 5 -> ModConfig.autoBerryStageTwo ? "С 2-й стадии" : "Только спелые (3)";
+            case 6 -> ModConfig.autoBerryClickDelay + " т."; case 7 -> ModConfig.autoBerryRandomDelay + " т.";
+            case 8 -> Integer.toString(ModConfig.autoBerryMaxCps); case 9 -> ModConfig.autoBerryScanTicks + " т.";
+            case 10 -> onOff(ModConfig.autoBerryOnlyStationary); case 11 -> onOff(ModConfig.autoBerryPauseWithScreen);
+            case 12 -> onOff(ModConfig.autoBerryPauseUsingItem); case 13 -> onOff(ModConfig.autoBerrySafeHand);
+            case 14 -> onOff(ModConfig.autoBerrySwing); case 15 -> onOff(ModConfig.autoBerrySound);
+            case 16 -> onOff(ModConfig.autoBerryParticles); case 17 -> onOff(ModConfig.autoBerryCountHud);
+            case 18 -> onOff(ModConfig.autoBerryHighlight); default -> onOff(ModConfig.autoBerryVisibleOnly);
+        };
+    }
+    private String onOff(boolean value) { return value ? "ВКЛ" : "ВЫКЛ"; }
+    private void changeGameSetting(int i) {
+        switch (i) {
+            case 0 -> AutoBerry.toggle(); case 1 -> ModConfig.autoBerryRadius = ModConfig.autoBerryRadius >= 5.0 ? 1.0 : ModConfig.autoBerryRadius + 0.5;
+            case 2 -> ModConfig.autoBerryLimitReach = !ModConfig.autoBerryLimitReach;
+            case 3 -> ModConfig.autoBerrySweet = !ModConfig.autoBerrySweet; case 4 -> ModConfig.autoBerryGlow = !ModConfig.autoBerryGlow;
+            case 5 -> ModConfig.autoBerryStageTwo = !ModConfig.autoBerryStageTwo;
+            case 6 -> ModConfig.autoBerryClickDelay = cycle(ModConfig.autoBerryClickDelay, 1, 20);
+            case 7 -> ModConfig.autoBerryRandomDelay = cycle(ModConfig.autoBerryRandomDelay, 0, 5);
+            case 8 -> ModConfig.autoBerryMaxCps = cycle(ModConfig.autoBerryMaxCps, 1, 10);
+            case 9 -> ModConfig.autoBerryScanTicks = cycle(ModConfig.autoBerryScanTicks, 1, 20);
+            case 10 -> ModConfig.autoBerryOnlyStationary = !ModConfig.autoBerryOnlyStationary;
+            case 11 -> ModConfig.autoBerryPauseWithScreen = !ModConfig.autoBerryPauseWithScreen;
+            case 12 -> ModConfig.autoBerryPauseUsingItem = !ModConfig.autoBerryPauseUsingItem;
+            case 13 -> ModConfig.autoBerrySafeHand = !ModConfig.autoBerrySafeHand;
+            case 14 -> ModConfig.autoBerrySwing = !ModConfig.autoBerrySwing; case 15 -> ModConfig.autoBerrySound = !ModConfig.autoBerrySound;
+            case 16 -> ModConfig.autoBerryParticles = !ModConfig.autoBerryParticles; case 17 -> ModConfig.autoBerryCountHud = !ModConfig.autoBerryCountHud;
+            case 18 -> ModConfig.autoBerryHighlight = !ModConfig.autoBerryHighlight; case 19 -> ModConfig.autoBerryVisibleOnly = !ModConfig.autoBerryVisibleOnly;
+        }
+        ModConfig.save();
+    }
+    private int cycle(int value, int min, int max) { return value >= max ? min : value + 1; }
 
     private void drawSky(DrawContext c, int py) {
         int x1 = left + 139, x2 = left + panelWidth - 5;
@@ -246,19 +312,31 @@ public final class T1deedynScreen extends Screen {
                 if (selectedTab == 3 && my >= top + 82 && my <= top + 112) { ModConfig.menuAnimations = !ModConfig.menuAnimations; ModConfig.save(); return true; }
             }
         }
-        if (selectedTab == 4 && my >= top + 110 && my <= top + 158) {
+        if (selectedTab == 3 && mx >= x && mx <= right && my >= top + 66 && my <= top + panelHeight - 25) {
+            int row = gameScroll + (int)((my - (top + 66)) / 22.0);
+            if (row >= 0 && row < 20) { changeGameSetting(row); return true; }
+        }
+        if (selectedTab == 5 && my >= top + 110 && my <= top + 158) {
             if (mx >= x && mx <= x + 50) ModConfig.accentTheme = 0;
             else if (mx >= x + 58 && mx <= x + 110) ModConfig.accentTheme = 1;
             else if (mx >= x + 116 && mx <= x + 170) ModConfig.accentTheme = 2;
             else return super.mouseClicked(mx, my, button);
             ModConfig.save(); return true;
         }
-        if (selectedTab == 5) {
+        if (selectedTab == 6) {
             if (my >= top + 167 && my <= top + 191) activeSlider = 1;
             else if (my >= top + 236 && my <= top + 260) activeSlider = 2;
             if (activeSlider >= 0) { sliderDragging = true; setSlider(mx); return true; }
         }
         return super.mouseClicked(mx, my, button);
+    }
+
+    @Override public boolean mouseScrolled(double mx, double my, double horizontalAmount, double verticalAmount) {
+        if (selectedTab == 3 && mx >= left + 145 && my >= top + 55 && my <= top + panelHeight - 20) {
+            gameScroll = Math.max(0, Math.min(8, gameScroll + (verticalAmount < 0 ? 1 : -1)));
+            return true;
+        }
+        return super.mouseScrolled(mx, my, horizontalAmount, verticalAmount);
     }
 
     @Override public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
