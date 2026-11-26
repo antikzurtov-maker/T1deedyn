@@ -295,7 +295,7 @@ public final class T1deedynScreen extends Screen {
         int x = left + 158;
         int right = left + panelWidth - 22;
         int bx = right - 45;
-        if (selectedTab == 0 || selectedTab == 1 || selectedTab == 2 || selectedTab == 3) {
+        if (selectedTab == 0 || selectedTab == 1 || selectedTab == 2 || selectedTab == 4) {
             if (mx >= bx - 5 && mx <= bx + 48) {
                 if (selectedTab == 0 && my >= top + 82 && my <= top + 112) { ModConfig.particles = !ModConfig.particles; ModConfig.save(); return true; }
                 if (selectedTab == 1) {
@@ -309,7 +309,7 @@ public final class T1deedynScreen extends Screen {
                     if (my >= top + 82 && my <= top + 112) { ModConfig.cleanHud = !ModConfig.cleanHud; ModConfig.save(); return true; }
                     if (my >= top + 126 && my <= top + 156) { ModConfig.showCoordinates = !ModConfig.showCoordinates; ModConfig.save(); return true; }
                 }
-                if (selectedTab == 3 && my >= top + 82 && my <= top + 112) { ModConfig.menuAnimations = !ModConfig.menuAnimations; ModConfig.save(); return true; }
+                if (selectedTab == 4 && my >= top + 82 && my <= top + 112) { ModConfig.menuAnimations = !ModConfig.menuAnimations; ModConfig.save(); return true; }
             }
         }
         if (selectedTab == 3 && mx >= x && mx <= right && my >= top + 66 && my <= top + panelHeight - 25) {
