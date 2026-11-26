@@ -336,15 +336,16 @@ public final class BlackCloverScreen extends Screen {
         }
     }
     private void renderProfileModal(DrawContext c){
-        int mw=Math.min(330,width-24),mh=206,mx=(width-mw)/2,my=(height-mh)/2;
+        int mw=Math.min(360,width-24),mh=226,mx=(width-mw)/2,my=(height-mh)/2;
         c.fill(0,0,width,height,0x99000000);RoundedRect.border(c,mx,my,mw,mh,12,1,Theme.brightAccentColor(),Theme.PANEL);
         drawCentered(c,"ПРОФИЛИ",width/2,my+12,Theme.brightAccentColor());
         RoundedRect.fill(c,mx+12,my+34,mw-24,24,6,Theme.CARD);
         drawText(c,profileName.isEmpty()?"Имя профиля…":profileName,mx+20,my+42,Theme.TEXT,mw-40);
         List<String> profiles=CloverProfiles.list();int rowY=my+66;
         for(int i=0;i<Math.min(4,profiles.size());i++){String n=profiles.get(i);if(n.equals(selectedProfile))RoundedRect.fill(c,mx+12,rowY+i*21,mw-24,19,5,Theme.CARD_HOVER);c.drawText(textRenderer,n,mx+20,rowY+5+i*21,Theme.TEXT,false);}
-        int by=my+mh-34;RoundedRect.fill(c,mx+12,by,88,23,6,Theme.CARD_HOVER);RoundedRect.fill(c,mx+106,by,88,23,6,Theme.CARD_HOVER);RoundedRect.fill(c,mx+200,by,Math.max(60,mw-212),23,6,Theme.CARD_HOVER);
-        drawCentered(c,"Сохранить",mx+56,by+7,Theme.TEXT);drawCentered(c,"Загрузить",mx+150,by+7,Theme.TEXT);drawCentered(c,"Удалить",mx+200+Math.max(60,mw-212)/2,by+7,Theme.TEXT);
+        int by=my+mh-34,buttonW=(mw-32)/4;
+        String[] labels={"Сохранить","Переимен.","Загрузить","Удалить"};
+        for(int i=0;i<4;i++){int bx=mx+12+i*(buttonW+2);RoundedRect.fill(c,bx,by,buttonW,23,6,Theme.CARD_HOVER);drawCentered(c,labels[i],bx+buttonW/2,by+7,i==3?Theme.DANGER:Theme.TEXT);}
     }
     private void renderThemeDropdown(DrawContext c){
         int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48,w=112;
