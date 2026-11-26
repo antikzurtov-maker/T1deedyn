@@ -1,359 +1,405 @@
 package dev.t1deedyn;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-/** Main Black Clover interface. Widget geometry is shared by rendering and input. */
+/** Responsive integer-coordinate interface for Minecraft 1.21 / Yarn. */
 public final class BlackCloverScreen extends Screen {
     private static final String[] TABS={"Визуал","Игрок","Мир","Интерфейс","HUD","Эффекты","Настройки"};
-    private static final String[] ICONS={"◉","♟","◎","▣","▥","✦","⚙"};
     private static final String[] DESCRIPTIONS={
         "Настройка визуальных эффектов и отображения","Настройки игрока и автоматизации",
         "Окружение, погода и подсветка мира","Масштаб, прозрачность и оформление",
         "Информация и элементы игрового HUD","Частицы и визуальные эффекты",
         "Профили, производительность и информация"
     };
-    private static final int ROW_HEIGHT=54;
-    private static final int LIST_TOP=72;
+    private static final int ROW_HEIGHT=54, GAP=8;
     private final List<CloverFeature> visibleFeatures=new ArrayList<>();
+    private final Map<String,String> ellipsisCache=new HashMap<>();
     private UiLayout layout;
-    private int selectedTab;
-    private int selectedFeature=-1;
-    private int scrollOffset;
-    private boolean searchFocused;
-    private boolean minimized;
-    private String search="";
-    private int hoverRow=-1;
-    private int draggingSlider=-1;
-    private int animationTicks;
-    private boolean profileModal;
-    private String profileName="main";
-    private String selectedProfile="";
+    private int selectedTab, selectedFeature=-1, scrollOffset, sidebarScroll, settingsScroll;
+    private boolean searchFocused, profileModal, themeDropdown, profileDropdown;
+    private String search="", profileName="profile-1", selectedProfile="";
+    private int draggingSlider=-1, animationTicks, hoverRow=-1;
+    private int lastWidth=-1,lastHeight=-1;
+    private int rightContentHeight;
 
     public BlackCloverScreen(){super(Text.literal("Чёрный Клевер"));}
-    @Override protected void init(){layout=new UiLayout(width,height);refreshFeatures();}
+    @Override protected void init(){
+        layout=new UiLayout(width,height);
+        lastWidth=width;lastHeight=height;
+        refreshFeatures();
+        calculateRightContent();
+    }
     @Override public boolean shouldPause(){return false;}
     @Override public void renderBackground(DrawContext c,int mouseX,int mouseY,float delta){
-        int alpha=(int)Math.round(Math.max(0.0,Math.min(0.75,ModConfig.backgroundDim))*255.0);
-        c.fill(0,0,width,height,(alpha<<24));
+        int alpha=(int)Math.round(clamp(ModConfig.backgroundDim,0.0,0.75)*255.0);
+        c.fill(0,0,width,height,alpha<<24);
     }
-
+    private static int clamp(int v,int min,int max){return Math.max(min,Math.min(max,v));}
+    private static double clamp(double v,double min,double max){return Math.max(min,Math.min(max,v));}
     private void refreshFeatures(){
         visibleFeatures.clear();
-        String query=search.trim().toLowerCase(java.util.Locale.ROOT);
+        String q=search.trim().toLowerCase(java.util.Locale.ROOT);
         for(CloverFeature feature:CloverFeature.ALL){
-            if(query.isEmpty()&&feature.tab!=selectedTab)continue;
-            if(!query.isEmpty()&&!feature.name.toLowerCase(java.util.Locale.ROOT).contains(query)
-                    &&!feature.description.toLowerCase(java.util.Locale.ROOT).contains(query))continue;
+            if(q.isEmpty()&&feature.tab!=selectedTab)continue;
+            if(!q.isEmpty()&&!feature.name.toLowerCase(java.util.Locale.ROOT).contains(q)
+                    &&!feature.description.toLowerCase(java.util.Locale.ROOT).contains(q))continue;
             visibleFeatures.add(feature);
         }
-        int max=Math.max(0,visibleFeatures.size()*ROW_HEIGHT-Math.max(0,layout==null?180:layout.contentHeight-LIST_TOP-10));
-        scrollOffset=Math.max(0,Math.min(scrollOffset,max));
+        int max=Math.max(0,visibleFeatures.size()*ROW_HEIGHT-layout.centerViewportHeight);
+        scrollOffset=clamp(scrollOffset,0,max);
         if(selectedFeature>=visibleFeatures.size())selectedFeature=-1;
     }
-
+    private void calculateRightContent(){rightContentHeight=selectedFeature>=0?196:360;}
+    private int shortText(String value,int maxWidth){
+        return textRenderer.getWidth(value)<=maxWidth?textRenderer.getWidth(value):maxWidth;
+    }
+    private String ellipsize(String value,int maxWidth){
+        if(maxWidth<=0)return "";
+        String key=maxWidth+"|"+value;
+        String cached=ellipsisCache.get(key);
+        if(cached!=null)return cached;
+        if(textRenderer.getWidth(value)<=maxWidth){ellipsisCache.put(key,value);return value;}
+        String suffix="…";
+        int suffixWidth=textRenderer.getWidth(suffix);
+        String cut=textRenderer.trimToWidth(value,Math.max(0,maxWidth-suffixWidth));
+        String result=cut+suffix;
+        ellipsisCache.put(key,result);
+        return result;
+    }
+    private void drawText(DrawContext c,String value,int x,int y,int color,int maxWidth){
+        c.enableScissor(x,y-1,x+Math.max(0,maxWidth),y+11);
+        try{c.drawText(textRenderer,ellipsize(value,maxWidth),x,y,color,false);}
+        finally{c.disableScissor();}
+    }
+    private void drawIcon(DrawContext c,int index,int x,int y,int color){
+        switch(index){
+            case 0 -> { // eye
+                c.drawHorizontalLine(x+1,x+16,y+8,color); c.drawVerticalLine(x+1,y+5,y+11,color);
+                c.drawVerticalLine(x+16,y+5,y+11,color); c.fill(x+5,y+5,x+13,y+12,color);
+                c.fill(x+8,y+6,x+11,y+11,Theme.PANEL);
+            }
+            case 1 -> {c.fill(x+6,y+1,x+12,y+8,color);c.fill(x+3,y+9,x+15,y+17,color);c.fill(x+5,y+12,x+13,y+17,Theme.PANEL);}
+            case 2 -> {c.fill(x+2,y+1,x+17,y+16,color);c.fill(x+4,y+3,x+15,y+14,Theme.PANEL);c.drawHorizontalLine(x+3,x+16,y+8,color);c.drawVerticalLine(x+9,y+2,y+15,color);c.drawVerticalLine(x+6,y+3,y+14,color);c.drawVerticalLine(x+12,y+3,y+14,color);}
+            case 3 -> {RoundedRect.border(c,x+1,y+1,17,12,2,1,color,Theme.PANEL);c.fill(x+8,y+13,x+11,y+16,color);c.fill(x+5,y+16,x+14,y+17,color);}
+            case 4 -> {c.fill(x+2,y+10,x+5,y+17,color);c.fill(x+7,y+5,x+10,y+17,color);c.fill(x+12,y+1,x+15,y+17,color);}
+            case 5 -> {c.fill(x+8,y,x+10,y+18,color);c.fill(x,y+8,x+18,y+10,color);c.fill(x+3,y+3,x+6,y+6,color);c.fill(x+12,y+12,x+15,y+15,color);}
+            case 6 -> {for(int i=0;i<8;i++){double a=i*Math.PI/4;int tx=x+9+(int)Math.round(Math.cos(a)*7),ty=y+9+(int)Math.round(Math.sin(a)*7);c.fill(tx-1,ty-1,tx+2,ty+2,color);}c.fill(x+4,y+4,x+14,y+14,color);c.fill(x+7,y+7,x+11,y+11,Theme.PANEL);}
+        }
+    }
     @Override public void render(DrawContext c,int mouseX,int mouseY,float delta){
+        if(layout==null||width!=lastWidth||height!=lastHeight){layout=new UiLayout(width,height);lastWidth=width;lastHeight=height;refreshFeatures();calculateRightContent();}
         renderBackground(c,mouseX,mouseY,delta);
         renderAtmosphere(c);
-        if(layout==null)layout=new UiLayout(width,height);
         int x=layout.x,y=layout.y,w=layout.width,h=layout.height;
         int accent=Theme.accentColor(),bright=Theme.brightAccentColor();
-        RoundedRect.fill(c,x-3,y-3,w+6,h+6,17,0x182BE36B);
-        RoundedRect.border(c,x,y,w,h,UiLayout.WINDOW_RADIUS,1,bright,Theme.BG);
-        RoundedRect.border(c,layout.sidebarX,y+UiLayout.GAP,layout.sidebarWidth,h-UiLayout.GAP*2,10,1,Theme.BORDER,surface(Theme.PANEL));
-        int logoX=layout.sidebarX+(layout.sidebarWidth-64)/2;
-        CloverMark.draw(c,logoX,y+22,64,accent);
-        drawCentered(c,"ЧЁРНЫЙ",layout.sidebarX+layout.sidebarWidth/2,y+91,Theme.TEXT);
-        drawCentered(c,"КЛЕВЕР",layout.sidebarX+layout.sidebarWidth/2,y+103,Theme.TEXT);
-        int tabY=y+132;
-        for(int i=0;i<TABS.length;i++){
-            int ty=tabY+i*36;
-            boolean hovered=inside(mouseX,mouseY,layout.sidebarX+6,ty,layout.sidebarWidth-12,32);
-            if(i==selectedTab)RoundedRect.border(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,1,bright,0x702BE36B);
-            else if(hovered)RoundedRect.fill(c,layout.sidebarX+6,ty,layout.sidebarWidth-12,32,8,surface(Theme.CARD_HOVER));
-            c.drawText(textRenderer,ICONS[i],layout.sidebarX+15,ty+10,i==selectedTab?Theme.TEXT:Theme.TEXT_DIM,false);
-            c.drawText(textRenderer,TABS[i],layout.sidebarX+36,ty+11,i==selectedTab?Theme.TEXT:Theme.TEXT_DIM,false);
-        }
-        int footerY=y+h-39;
-        c.fill(layout.sidebarX+10,footerY-8,layout.sidebarX+layout.sidebarWidth-10,footerY-7,Theme.BORDER);
-        c.drawText(textRenderer,"✦ Minecraft 1.21.0",layout.sidebarX+10,footerY,Theme.TEXT_DIM,false);
-        c.drawText(textRenderer,"Fabric",layout.sidebarX+10,footerY+12,accent,false);
-
-        int mainX=layout.centerX;
-        int mainRight=layout.compact?x+w-UiLayout.GAP:layout.settingsX+layout.settingsWidth;
-        int mainWidth=mainRight-mainX;
-        RoundedRect.border(c,mainX,y+UiLayout.GAP,mainWidth,UiLayout.TOPBAR_HEIGHT,8,1,Theme.BORDER,Theme.PANEL);
-        int searchW=Math.max(70,mainWidth/3);
-        RoundedRect.fill(c,mainX+7,y+UiLayout.GAP+5,searchW,26,7,Theme.CARD);
-        c.drawText(textRenderer,"⌕",mainX+15,y+UiLayout.GAP+13,Theme.TEXT_DIM,false);
-        String searchLabel=search.isEmpty()?"Поиск функций...":search;
-        c.drawText(textRenderer,searchLabel,mainX+31,y+UiLayout.GAP+13,searchFocused?Theme.TEXT:Theme.TEXT_DIM,false);
-        int controlsX=mainX+searchW+18;
-        if(mainWidth>330)c.drawText(textRenderer,"♣ Профиль 1",controlsX,y+UiLayout.GAP+14,Theme.TEXT,false);
-        if(mainWidth>440)c.drawText(textRenderer,"Тема ⌄",Math.min(mainRight-110,controlsX+95),y+UiLayout.GAP+14,accent,false);
-        RoundedRect.fill(c,mainRight-66,y+UiLayout.GAP+4,28,28,7,Theme.CARD);
-        RoundedRect.fill(c,mainRight-34,y+UiLayout.GAP+4,28,28,7,Theme.CARD);
-        drawCentered(c,"—",mainRight-52,y+UiLayout.GAP+13,Theme.TEXT);
-        drawCentered(c,"×",mainRight-20,y+UiLayout.GAP+13,Theme.TEXT);
-
-        int contentY=layout.contentY,contentH=layout.contentHeight;
-        int centerW=layout.compact?mainWidth:layout.centerWidth;
-        RoundedRect.border(c,mainX,contentY,centerW,contentH,9,1,Theme.BORDER,Theme.PANEL);
-        CloverMark.draw(c,mainX+12,contentY+12,30,accent);
-        c.drawText(textRenderer,search.isEmpty()?TABS[selectedTab].toUpperCase(java.util.Locale.ROOT):"РЕЗУЛЬТАТЫ ПОИСКА",mainX+52,contentY+15,accent,false);
-        if(!layout.compact)c.drawText(textRenderer,DESCRIPTIONS[selectedTab],mainX+12,contentY+51,Theme.TEXT_DIM,false);
-        refreshFeatures();
-        int listX=mainX+8,listY=contentY+LIST_TOP,listW=centerW-16;
-        int listH=Math.max(30,contentH-LIST_TOP-8);
-        c.enableScissor(listX,listY,listX+listW,listY+listH);
-        hoverRow=-1;
-        for(int i=0;i<visibleFeatures.size();i++){
-            int rowY=listY+i*ROW_HEIGHT-scrollOffset;
-            if(rowY+ROW_HEIGHT<listY||rowY>listY+listH)continue;
-            CloverFeature feature=visibleFeatures.get(i);
-            boolean hovered=inside(mouseX,mouseY,listX,rowY,listW,ROW_HEIGHT-4);
-            if(hovered)hoverRow=i;
-            if(i==selectedFeature)RoundedRect.border(c,listX,rowY,listW,ROW_HEIGHT-4,8,1,bright,Theme.CARD);
-            else if(hovered)RoundedRect.fill(c,listX,rowY,listW,ROW_HEIGHT-4,8,Theme.CARD_HOVER);
-            else RoundedRect.fill(c,listX,rowY,listW,ROW_HEIGHT-4,8,Theme.CARD);
-            c.fill(listX+9,rowY+10,listX+11,rowY+ROW_HEIGHT-14,i==selectedFeature?accent:Theme.BORDER);
-            c.drawText(textRenderer,feature.name,listX+18,rowY+10,Theme.TEXT,false);
-            if(!layout.compact)c.drawText(textRenderer,feature.description,listX+18,rowY+27,Theme.TEXT_DIM,false);
-            drawToggle(c,listX+listW-52,rowY+16,feature.enabled(),accent);
-        }
-        c.disableScissor();
-        if(visibleFeatures.isEmpty())drawCentered(c,"Ничего не найдено",mainX+centerW/2,contentY+contentH/2,Theme.TEXT_DIM);
-        if(!layout.compact){
-            int sx=layout.settingsX, sw=layout.settingsWidth;
-            RoundedRect.border(c,sx,contentY,sw,contentH,9,1,Theme.BORDER,Theme.PANEL);
-            CloverMark.draw(c,sx+12,contentY+12,28,accent);
-            c.drawText(textRenderer,"НАСТРОЙКИ",sx+48,contentY+18,accent,false);
-            if(selectedFeature>=0&&selectedFeature<visibleFeatures.size()){
-                CloverFeature feature=visibleFeatures.get(selectedFeature);
-                c.drawText(textRenderer,feature.name,sx+12,contentY+58,Theme.TEXT,false);
-                c.drawText(textRenderer,feature.description,sx+12,contentY+78,Theme.TEXT_DIM,false);
-                c.drawText(textRenderer,"Состояние",sx+12,contentY+116,Theme.TEXT_DIM,false);
-                drawToggle(c,sx+sw-58,contentY+110,feature.enabled(),accent);
-                c.drawText(textRenderer,feature.enabled()?"Включено":"Выключено",sx+12,contentY+137,feature.enabled()?accent:Theme.TEXT_DIM,false);
-            }else{
-                c.drawText(textRenderer,"ПРЕДПРОСМОТР HUD",sx+12,contentY+58,Theme.TEXT,false);
-                RoundedRect.fill(c,sx+10,contentY+78,sw-20,54,7,Theme.CARD);
-                c.drawText(textRenderer,"FPS: 144",sx+18,contentY+87,Theme.TEXT,false);
-                c.drawText(textRenderer,"XYZ: 120 64 -38",sx+18,contentY+103,Theme.TEXT_DIM,false);
-                c.drawText(textRenderer,"ЧЁРНЫЙ КЛЕВЕР",sx+18,contentY+119,accent,false);
+        c.enableScissor(x,y,x+w,y+h);
+        try{
+            RoundedRect.fill(c,x-2,y-2,w+4,h+4,16,0x182BE36B);
+            RoundedRect.border(c,x,y,w,h,UiLayout.WINDOW_RADIUS,1,bright,Theme.BG);
+            renderSidebar(c,mouseX,mouseY);
+            renderTopbar(c,mouseX,mouseY);
+            renderFeatureList(c,mouseX,mouseY);
+            if(!layout.compact)renderSettings(c,mouseX,mouseY);
+            renderCreators(c);
+            if(profileModal)renderProfileModal(c);
+            if(themeDropdown)renderThemeDropdown(c);
+            if(profileDropdown)renderProfileDropdown(c);
+        } finally {c.disableScissor();}
+        if(ModConfig.showBounds)drawBounds(c);
+    }
+    private void renderSidebar(DrawContext c,int mx,int my){
+        int sx=layout.sidebarX,sy=layout.y+GAP,sw=layout.sidebarWidth;
+        RoundedRect.border(c,sx,sy,sw,layout.height-GAP*2,10,1,Theme.BORDER,surface(Theme.PANEL));
+        int logo=layout.logoHeight;
+        int mark=Math.min(56,Math.max(24,logo-24));
+        CloverMark.draw(c,sx+(sw-mark)/2,sy+5,mark,Theme.accentColor());
+        drawCentered(c,"ЧЁРНЫЙ",sx+sw/2,sy+logo-17,Theme.TEXT);
+        int vx=layout.sidebarViewportX,vy=layout.sidebarViewportY,vw=layout.sidebarViewportWidth,vh=layout.sidebarViewportHeight;
+        c.enableScissor(vx,vy,vx+vw,vy+vh);
+        try{
+            int rowH=layout.tabHeight;
+            for(int i=0;i<TABS.length;i++){
+                int ty=vy+i*(rowH+4)-sidebarScroll;
+                if(ty+rowH<vy||ty>vy+vh)continue;
+                boolean active=i==selectedTab,hover=inside(mx,my,vx,ty,vw,rowH);
+                if(active)RoundedRect.border(c,vx,ty,vw,rowH,7,1,Theme.brightAccentColor(),0x702BE36B);
+                else if(hover)RoundedRect.fill(c,vx,ty,vw,rowH,7,surface(Theme.CARD_HOVER));
+                int iconY=ty+(rowH-18)/2;
+                drawIcon(c,i,vx+5,iconY,active?Theme.TEXT:Theme.TEXT_DIM);
+                if(vw>88)drawText(c,TABS[i],vx+29,ty+(rowH-9)/2,active?Theme.TEXT:Theme.TEXT_DIM,vw-34);
             }
-            c.drawText(textRenderer,"Прозрачность меню",sx+12,contentY+158,Theme.TEXT_DIM,false);
-            drawSlider(c,sx+12,contentY+178,sw-24,ModConfig.menuOpacity,0.72,1.0,accent);
-            c.drawText(textRenderer,String.format(java.util.Locale.ROOT,"%.0f%%",ModConfig.menuOpacity*100),sx+sw-43,contentY+158,Theme.TEXT,false);
-            c.drawText(textRenderer,"Затемнение фона",sx+12,contentY+205,Theme.TEXT_DIM,false);
-            drawSlider(c,sx+12,contentY+225,sw-24,ModConfig.backgroundDim,0.0,0.75,accent);
-            c.drawText(textRenderer,String.format(java.util.Locale.ROOT,"%.0f%%",ModConfig.backgroundDim*100),sx+sw-43,contentY+205,Theme.TEXT,false);
-            c.drawText(textRenderer,"Цветовая тема",sx+12,contentY+250,Theme.TEXT_DIM,false);
-            c.drawText(textRenderer,Theme.selected().name(),sx+12,contentY+267,accent,false);
+        }finally{c.disableScissor();}
+        int fy=layout.footerY;
+        c.fill(sx+8,fy-4,sx+sw-8,fy-3,Theme.BORDER);
+        String footer="✦ Minecraft 1.21.0 • Fabric";
+        int max=sw-16;
+        if(textRenderer.getWidth(footer)>max)footer="1.21.0 • Fabric";
+        if(textRenderer.getWidth(footer)>max)footer=textRenderer.trimToWidth(footer,max);
+        c.drawText(textRenderer,footer,sx+8,fy+2,Theme.TEXT_DIM,false);
+        if(ModConfig.showBounds)RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFFFFAA33,0x00000000);
+    }
+    private void renderTopbar(DrawContext c,int mx,int my){
+        int left=layout.centerX,right=layout.compact?layout.x+layout.width-GAP:layout.settingsX+layout.settingsWidth;
+        int top=layout.y+GAP,barW=right-left;
+        RoundedRect.border(c,left,top,barW,UiLayout.TOPBAR_HEIGHT,8,1,Theme.BORDER,Theme.PANEL);
+        int closeW=26,minW=26;
+        RoundedRect.fill(c,right-closeW-4,top+5,closeW,26,6,Theme.CARD);
+        RoundedRect.fill(c,right-closeW-minW-8,top+5,minW,26,6,Theme.CARD);
+        drawCentered(c,"×",right-closeW/2-4,top+13,Theme.TEXT);
+        drawCentered(c,"—",right-closeW-minW/2-8,top+13,Theme.TEXT);
+        int available=Math.max(90,barW-2*(closeW+minW)-32);
+        int searchW=Math.max(90,Math.min(available/2,barW/3));
+        searchW=Math.min(searchW,Math.max(90,barW-160));
+        RoundedRect.fill(c,left+6,top+5,searchW,26,6,Theme.CARD);
+        c.drawText(textRenderer,"⌕",left+13,top+13,Theme.TEXT_DIM,false);
+        drawText(c,search.isEmpty()?"Поиск функций…":search,left+29,top+13,searchFocused?Theme.TEXT:Theme.TEXT_DIM,searchW-35);
+        int controlsX=left+searchW+12;
+        int controlRight=right-closeW-minW-16;
+        int remaining=controlRight-controlsX;
+        if(remaining>=58){
+            int pw=Math.min(118,remaining/2-3);
+            RoundedRect.border(c,controlsX,top+5,pw,26,6,1,Theme.BORDER,Theme.CARD);
+            CloverMark.draw(c,controlsX+5,top+11,13,Theme.accentColor());
+            if(pw>=88)drawText(c,"Профиль 1",controlsX+23,top+13,Theme.TEXT,pw-39);
+            else drawCentered(c,"♣",controlsX+pw/2,top+13,Theme.TEXT);
+            c.drawText(textRenderer,"⌄",controlsX+pw-13,top+13,Theme.TEXT_DIM,false);
+            int tx=controlsX+pw+5,tw=controlRight-tx;
+            if(tw>=30){
+                RoundedRect.border(c,tx,top+5,tw,26,6,1,Theme.BORDER,Theme.CARD);
+                if(tw>=64)drawText(c,"☾ Тема",tx+6,top+13,Theme.accentColor(),tw-18);
+                else drawCentered(c,"☾",tx+tw/2,top+13,Theme.accentColor());
+                c.drawText(textRenderer,"⌄",tx+tw-12,top+13,Theme.TEXT_DIM,false);
+            }
         }
-        int tagW=Math.min(190,w-20),tagX=x+w-tagW,tagY=y+h+5;
-        RoundedRect.border(c,tagX,tagY,tagW,22,8,1,bright,Theme.PANEL);
-        CloverMark.draw(c,tagX+6,tagY+4,14,accent);
-        c.drawText(textRenderer,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,bright,false);
-        if(profileModal)renderProfileModal(c);
     }
-
-    private void renderProfileModal(DrawContext c){
-        int mw=Math.min(330,width-24),mh=206,mx=(width-mw)/2,my=(height-mh)/2;
-        c.fill(0,0,width,height,0x99000000);
-        RoundedRect.border(c,mx,my,mw,mh,12,1,Theme.brightAccentColor(),Theme.PANEL);
-        drawCentered(c,"ПРОФИЛИ",width/2,my+12,Theme.brightAccentColor());
-        RoundedRect.fill(c,mx+12,my+34,mw-24,24,6,Theme.CARD);
-        c.drawText(textRenderer,profileName.isEmpty()?"Имя профиля...":profileName,mx+20,my+42,Theme.TEXT,false);
-        List<String> profiles=CloverProfiles.list();
-        int rowY=my+66;
-        for(int i=0;i<Math.min(4,profiles.size());i++){
-            String name=profiles.get(i);
-            boolean selected=name.equals(selectedProfile);
-            if(selected)RoundedRect.fill(c,mx+12,rowY+i*21,mw-24,19,5,Theme.CARD_HOVER);
-            c.drawText(textRenderer,name,mx+20,rowY+5+i*21,selected?Theme.brightAccentColor():Theme.TEXT_DIM,false);
+    private void renderFeatureList(DrawContext c,int mx,int my){
+        int cx=layout.centerX,cy=layout.contentY,cw=layout.compact?layout.width-(cx-layout.x)-GAP:layout.centerWidth,ch=layout.contentHeight;
+        RoundedRect.border(c,cx,cy,cw,ch,9,1,Theme.BORDER,surface(Theme.PANEL));
+        CloverMark.draw(c,cx+10,cy+10,26,Theme.accentColor());
+        c.drawText(textRenderer,search.isEmpty()?TABS[selectedTab].toUpperCase(java.util.Locale.ROOT):"РЕЗУЛЬТАТЫ ПОИСКА",cx+43,cy+17,Theme.accentColor(),false);
+        if(!layout.compact)drawText(c,DESCRIPTIONS[selectedTab],cx+12,cy+43,Theme.TEXT_DIM,cw-24);
+        int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
+        refreshFeatures();
+        hoverRow=-1;
+        c.enableScissor(vx,vy,vx+vw,vy+vh);
+        try{
+            for(int i=0;i<visibleFeatures.size();i++){
+                int ry=vy+i*ROW_HEIGHT-scrollOffset;
+                if(ry+ROW_HEIGHT<vy||ry>vy+vh)continue;
+                CloverFeature f=visibleFeatures.get(i);
+                boolean hovered=inside(mx,my,vx,ry,vw,ROW_HEIGHT-4);
+                if(hovered)hoverRow=i;
+                if(i==selectedFeature)RoundedRect.border(c,vx,ry,vw,ROW_HEIGHT-4,7,1,Theme.brightAccentColor(),Theme.CARD);
+                else RoundedRect.fill(c,vx,ry,vw,ROW_HEIGHT-4,7,hovered?Theme.CARD_HOVER:Theme.CARD);
+                c.fill(vx+7,ry+10,vx+9,ry+ROW_HEIGHT-14,i==selectedFeature?Theme.accentColor():Theme.BORDER);
+                int toggleX=vx+vw-48, textX=vx+17, textW=Math.max(12,toggleX-textX-12);
+                drawText(c,f.name,textX,ry+9,Theme.TEXT,textW);
+                if(!layout.compact)drawText(c,f.description,textX,ry+27,Theme.TEXT_DIM,textW);
+                drawToggle(c,toggleX,ry+17,f.enabled(),Theme.accentColor());
+            }
+        }finally{c.disableScissor();}
+        drawScrollbar(c,vx+vw-2,vy,vh,visibleFeatures.size()*ROW_HEIGHT,scrollOffset,Theme.accentColor());
+        if(hoverRow>=0&&!layout.compact){
+            CloverFeature f=visibleFeatures.get(hoverRow);
+            if(textRenderer.getWidth(f.description)>Math.max(12,vw-90)){
+                int tw=Math.min(260,textRenderer.getWidth(f.description)+12),tx=clamp(mx+10,layout.x,layout.x+layout.width-tw);
+                RoundedRect.fill(c,tx,my+12,tw,22,5,0xF0101813);
+                c.drawText(textRenderer,textRenderer.trimToWidth(f.description,tw-10),tx+5,my+19,Theme.TEXT,false);
+            }
         }
-        int by=my+mh-34;
-        RoundedRect.fill(c,mx+12,by,88,23,6,Theme.CARD_HOVER);
-        RoundedRect.fill(c,mx+106,by,88,23,6,Theme.CARD_HOVER);
-        RoundedRect.fill(c,mx+200,by,Math.max(60,mw-212),23,6,Theme.CARD_HOVER);
-        drawCentered(c,"Сохранить",mx+56,by+7,Theme.TEXT);
-        drawCentered(c,"Загрузить",mx+150,by+7,Theme.TEXT);
-        drawCentered(c,"Удалить",mx+200+(Math.max(60,mw-212))/2,by+7,Theme.TEXT);
-        c.drawText(textRenderer,"ESC: закрыть",mx+12,my+mh-51,Theme.TEXT_DIM,false);
     }
-
-    private int surface(int color){
-        int alpha=(color>>>24)&255;
-        int opacity=(int)Math.round(Math.max(0.72,Math.min(1.0,ModConfig.menuOpacity))*alpha);
-        return (color&0x00FFFFFF)|(opacity<<24);
+    private void renderSettings(DrawContext c,int mx,int my){
+        int sx=layout.settingsX,sy=layout.contentY,sw=layout.settingsWidth,sh=layout.contentHeight;
+        RoundedRect.border(c,sx,sy,sw,sh,9,1,Theme.BORDER,surface(Theme.PANEL));
+        boolean general=selectedFeature<0||selectedFeature>=visibleFeatures.size();
+        CloverMark.draw(c,sx+9,sy+9,24,Theme.accentColor());
+        drawText(c,general?"ОБЩИЕ НАСТРОЙКИ МЕНЮ":"НАСТРОЙКИ ФУНКЦИИ",sx+39,sy+17,Theme.accentColor(),sw-48);
+        int vx=layout.settingsViewportX,vy=layout.settingsViewportY,vw=layout.settingsViewportWidth,vh=layout.settingsViewportHeight;
+        int total=general?360:196;
+        c.enableScissor(vx,vy,vx+vw,vy+vh);
+        try{
+            int cy=vy-settingsScroll;
+            if(general){
+                c.drawText(textRenderer,"ПРЕДПРОСМОТР HUD",vx,cy+2,Theme.TEXT,false);
+                RoundedRect.fill(c,vx,cy+22,vw,56,7,Theme.CARD);
+                c.drawText(textRenderer,"FPS: 144",vx+8,cy+29,Theme.TEXT,false);
+                c.drawText(textRenderer,"XYZ: 120 64 -38",vx+8,cy+43,Theme.TEXT_DIM,false);
+                c.drawText(textRenderer,"ЧЁРНЫЙ КЛЕВЕР",vx+8,cy+57,Theme.accentColor(),false);
+                drawSettingLabel(c,"Прозрачность меню",vx,cy+91,vw);
+                drawSlider(c,vx+12,cy+109,vw-24,ModConfig.menuOpacity,0.72,1.0,0);
+                drawSettingLabel(c,"Затемнение фона",vx,cy+145,vw);
+                drawSlider(c,vx+12,cy+163,vw-24,ModConfig.backgroundDim,0.0,0.75,1);
+                drawSettingLabel(c,"Цветовая тема",vx,cy+199,vw);
+                RoundedRect.border(c,vx,cy+217,vw,28,6,1,Theme.BORDER,Theme.CARD);
+                drawText(c,Theme.selected().name(),vx+8,cy+226,Theme.accentColor(),vw-16);
+                RoundedRect.fill(c,vx,cy+253,vw,24,6,Theme.CARD_HOVER);
+                drawCentered(c,"Сбросить цвет",vx+vw/2,cy+261,Theme.TEXT);
+                drawSettingLabel(c,"Масштаб меню",vx,cy+289,vw);
+                RoundedRect.border(c,vx,cy+307,vw,25,6,1,Theme.BORDER,Theme.CARD);
+                String scale=ModConfig.uiScale==0?"Авто":Integer.toString(ModConfig.uiScale);
+                drawCentered(c,scale+"  ⌄",vx+vw/2,cy+315,Theme.TEXT);
+                RoundedRect.fill(c,vx,cy+339,vw,24,6,Theme.CARD_HOVER);
+                drawCentered(c,ModConfig.showBounds?"Границы: ВКЛ":"Показывать границы",vx+vw/2,cy+347,Theme.TEXT);
+            }else{
+                CloverFeature feature=visibleFeatures.get(selectedFeature);
+                c.drawText(textRenderer,feature.name,vx,cy+2,Theme.TEXT,false);
+                drawText(c,feature.description,vx,cy+22,Theme.TEXT_DIM,vw);
+                drawSettingLabel(c,"Состояние",vx,cy+58,vw);
+                drawToggle(c,vx+vw-42,cy+76,feature.enabled(),Theme.accentColor());
+                c.drawText(textRenderer,feature.enabled()?"Включено":"Выключено",vx,cy+105,feature.enabled()?Theme.accentColor():Theme.TEXT_DIM,false);
+                drawSettingLabel(c,"Дополнительные параметры",vx,cy+143,vw);
+            }
+        }finally{c.disableScissor();}
+        drawScrollbar(c,vx+vw-2,vy,vh,total,settingsScroll,Theme.accentColor());
+        if(ModConfig.showBounds)RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFF55AAFF,0x00000000);
     }
-
+    private void drawSettingLabel(DrawContext c,String label,int x,int y,int w){drawText(c,label,x,y,Theme.TEXT_DIM,w);}
+    private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int id){
+        int trackW=Math.max(12,w),centerMin=x+6,centerMax=x+trackW-6,center= centerMin+(int)Math.round((centerMax-centerMin)*clamp((value-min)/(max-min),0,1));
+        int trackY=y+13;
+        RoundedRect.fill(c,x,trackY-2,trackW,4,2,Theme.TOGGLE_OFF);
+        RoundedRect.fill(c,x,trackY-2,Math.max(0,center-x),4,2,Theme.accentColor());
+        int knobSize=inside(mouseXCache,mouseYCache,center-7,trackY-7,14,14)?14:12;
+        RoundedRect.fill(c,center-knobSize/2,trackY-knobSize/2,knobSize,knobSize,knobSize/2,Theme.accentColor());
+        RoundedRect.fill(c,center-3,trackY-3,6,6,3,Theme.TEXT);
+        int valueText=(int)Math.round(value*100);
+        String val=id==0?valueText+"%":valueText+"%";
+        RoundedRect.fill(c,x+trackW-38,y-1,38,14,5,Theme.CARD_HOVER);
+        drawCentered(c,val,x+trackW-19,y+2,Theme.TEXT);
+    }
+    private double mouseXCache,mouseYCache;
+    private void drawToggle(DrawContext c,int x,int y,boolean enabled,int accent){
+        RoundedRect.fill(c,x,y,40,20,10,enabled?accent:Theme.TOGGLE_OFF);
+        RoundedRect.fill(c,enabled?x+22:x+2,y+2,16,16,8,0xFFFFFFFF);
+    }
+    private void drawScrollbar(DrawContext c,int x,int y,int h,int content,int offset,int color){
+        if(content<=h||h<=0)return;
+        int thumb=Math.max(18,h*h/content);
+        int max=content-h,top=y+(h-thumb)*offset/max;
+        c.fill(x,y,x+2,y+h,0x503A5143);
+        RoundedRect.fill(c,x,top,2,thumb,1,color);
+    }
+    private void renderCreators(DrawContext c){
+        int tagW=Math.min(190,layout.width-20),tagX=layout.x+layout.width-tagW,tagY=layout.creatorY;
+        RoundedRect.border(c,tagX,tagY,tagW,22,8,1,Theme.brightAccentColor(),Theme.PANEL);
+        CloverMark.draw(c,tagX+6,tagY+4,14,Theme.accentColor());
+        drawText(c,"T1deedyn & PvE_BoTiK",tagX+25,tagY+7,Theme.brightAccentColor(),tagW-31);
+    }
     private void renderAtmosphere(DrawContext c){
         if(!ModConfig.menuAnimations)return;
         animationTicks++;
-        int green=0x182BE36B;
-        // Soft emerald vignette around the screen edges.
-        c.fill(0,0,width,3,0x242BE36B);
-        c.fill(0,height-4,width,height,0x202BE36B);
-        c.fill(0,0,3,height,0x182BE36B);
-        c.fill(width-3,0,width,height,0x182BE36B);
-        int count=Math.max(0,Math.min(20,ModConfig.particleLimit));
+        c.fill(0,0,width,2,0x202BE36B);c.fill(0,height-2,width,height,0x182BE36B);
+        int count=Math.min(20,Math.max(0,ModConfig.particleLimit));
         for(int i=0;i<count;i++){
-            double phase=animationTicks*0.018+i*2.399963229728653;
-            int px=(int)((i*97L+Math.sin(phase)*24+width)%Math.max(1,width));
-            int py=(int)((i*53L-animationTicks*0.32+Math.cos(phase*0.7)*13+height*3L)%Math.max(1,height));
-            int alpha=0x50000000|0x002BE36B;
-            CloverMark.draw(c,px,py,6+(i%3)*2,alpha);
+            int px=(int)((i*97L+animationTicks*3L)%Math.max(1,width));
+            int py=(int)((i*53L-animationTicks/2L+height*2L)%Math.max(1,height));
+            CloverMark.draw(c,px,py,8,0x502BE36B);
         }
     }
-
-    private void cycleTheme(){
-        Theme.Preset[] presets=Theme.Preset.values();
-        Theme.select(presets[(Theme.selected().ordinal()+1)%presets.length]);
-        ModConfig.accentTheme=Theme.selected().ordinal();
+    private void renderProfileModal(DrawContext c){
+        int mw=Math.min(330,width-24),mh=206,mx=(width-mw)/2,my=(height-mh)/2;
+        c.fill(0,0,width,height,0x99000000);RoundedRect.border(c,mx,my,mw,mh,12,1,Theme.brightAccentColor(),Theme.PANEL);
+        drawCentered(c,"ПРОФИЛИ",width/2,my+12,Theme.brightAccentColor());
+        RoundedRect.fill(c,mx+12,my+34,mw-24,24,6,Theme.CARD);
+        drawText(c,profileName.isEmpty()?"Имя профиля…":profileName,mx+20,my+42,Theme.TEXT,mw-40);
+        List<String> profiles=CloverProfiles.list();int rowY=my+66;
+        for(int i=0;i<Math.min(4,profiles.size());i++){String n=profiles.get(i);if(n.equals(selectedProfile))RoundedRect.fill(c,mx+12,rowY+i*21,mw-24,19,5,Theme.CARD_HOVER);c.drawText(textRenderer,n,mx+20,rowY+5+i*21,Theme.TEXT,false);}
+        int by=my+mh-34;RoundedRect.fill(c,mx+12,by,88,23,6,Theme.CARD_HOVER);RoundedRect.fill(c,mx+106,by,88,23,6,Theme.CARD_HOVER);RoundedRect.fill(c,mx+200,by,Math.max(60,mw-212),23,6,Theme.CARD_HOVER);
+        drawCentered(c,"Сохранить",mx+56,by+7,Theme.TEXT);drawCentered(c,"Загрузить",mx+150,by+7,Theme.TEXT);drawCentered(c,"Удалить",mx+200+Math.max(60,mw-212)/2,by+7,Theme.TEXT);
+    }
+    private void renderThemeDropdown(DrawContext c){
+        int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48,w=112;
+        RoundedRect.border(c,x,y,w,100,7,1,Theme.BORDER,Theme.PANEL);
+        Theme.Preset[] p=Theme.Preset.values();
+        for(int i=0;i<p.length;i++)c.drawText(textRenderer,p[i].name(),x+8,y+8+i*18,p[i]==Theme.selected()?Theme.accentColor():Theme.TEXT_DIM,false);
+    }
+    private void renderProfileDropdown(DrawContext c){
+        int x=layout.centerX+110,y=layout.y+48;
+        RoundedRect.border(c,x,y,130,86,7,1,Theme.BORDER,Theme.PANEL);
+        c.drawText(textRenderer,"Профиль 1",x+8,y+8,Theme.TEXT,false);
+        c.drawText(textRenderer,"Новый профиль",x+8,y+26,Theme.TEXT_DIM,false);
+        c.drawText(textRenderer,"Переименовать",x+8,y+44,Theme.TEXT_DIM,false);
+        c.drawText(textRenderer,"Удалить",x+8,y+62,Theme.DANGER,false);
+    }
+    private int surface(int color){int a=(color>>>24)&255;int o=(int)Math.round(clamp(ModConfig.menuOpacity,0.72,1.0)*a);return(color&0x00FFFFFF)|(o<<24);}
+    private void drawCentered(DrawContext c,String s,int x,int y,int color){c.drawText(textRenderer,s,x-textRenderer.getWidth(s)/2,y,color,false);}
+    private static boolean inside(double mx,double my,int x,int y,int w,int h){return mx>=x&&mx<x+w&&my>=y&&my<y+h;}
+    private void cycleTheme(){Theme.Preset[] p=Theme.Preset.values();Theme.select(p[(Theme.selected().ordinal()+1)%p.length]);ModConfig.accentTheme=Theme.selected().ordinal();ModConfig.accentHex=String.format(java.util.Locale.ROOT,"#%06X",Theme.accentColor()&0xFFFFFF);ModConfig.save();}
+    private void setSliderValue(int id,double mouseX){
+        int x=layout.settingsViewportX+12,w=layout.settingsViewportWidth-24;
+        double ratio=clamp((mouseX-(x+6.0))/Math.max(1,w-12),0,1);
+        if(id==0)ModConfig.menuOpacity=0.72+ratio*0.28;else ModConfig.backgroundDim=ratio*0.75;
         ModConfig.save();
     }
-
-    private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int accent){
-        int trackY=y+5; c.fill(x,trackY,x+w,trackY+4,Theme.TOGGLE_OFF);
-        int knob=x+(int)Math.round((w-8)*(value-min)/(max-min));
-        c.fill(x,trackY,x+knob+4,trackY+4,accent);
-        RoundedRect.fill(c,x+knob,trackY-3,8,10,4,Theme.TEXT);
+    private void drawBounds(DrawContext c){
+        RoundedRect.border(c,layout.sidebarX,layout.y+GAP,layout.sidebarWidth,layout.height-GAP*2,2,1,0xFFFFAA33,0);
+        RoundedRect.border(c,layout.centerX,layout.contentY,layout.compact?layout.width-(layout.centerX-layout.x)-GAP:layout.centerWidth,layout.contentHeight,2,1,0xFF55AAFF,0);
+        if(!layout.compact)RoundedRect.border(c,layout.settingsX,layout.contentY,layout.settingsWidth,layout.contentHeight,2,1,0xFFFF55AA,0);
     }
-
-    private void setSliderValue(int slider,double mouseX){
-        int sx=layout.settingsX+12, sw=layout.settingsWidth-24;
-        double value=Math.max(0.0,Math.min(1.0,(mouseX-sx)/(double)sw));
-        if(slider==0)ModConfig.menuOpacity=0.72+value*0.28;
-        else if(slider==1)ModConfig.backgroundDim=value*0.75;
-        ModConfig.save();
-    }
-
-    private void drawToggle(DrawContext c,int x,int y,boolean enabled,int accent){
-        RoundedRect.fill(c,x,y,40,20,10,enabled?accent:Theme.TOGGLE_OFF);
-        int knobX=enabled?x+22:x+2;
-        RoundedRect.fill(c,knobX,y+2,16,16,8,0xFFFFFFFF);
-    }
-
-    private void drawCentered(DrawContext c,String value,int centerX,int y,int color){
-        c.drawText(textRenderer,value,centerX-textRenderer.getWidth(value)/2,y,color,false);
-    }
-    private static boolean inside(double mx,double my,int x,int y,int w,int h){
-        return mx>=x&&mx<x+w&&my>=y&&my<y+h;
-    }
-
     @Override public boolean mouseClicked(double mx,double my,int button){
         if(layout==null)layout=new UiLayout(width,height);
-        int x=layout.x,y=layout.y;
-        if(button==0||button==1){
-            int tabY=y+132;
-            if(button==0){
-                for(int i=0;i<TABS.length;i++){
-                    int ty=tabY+i*36;
-                    if(inside(mx,my,layout.sidebarX+6,ty,layout.sidebarWidth-12,32)){
-                        selectedTab=i;scrollOffset=0;selectedFeature=-1;refreshFeatures();return true;
-                    }
-                }
-            }
-            int right=layout.compact?x+layout.width-UiLayout.GAP:layout.settingsX+layout.settingsWidth;
-            int topY=y+UiLayout.GAP;
-            if(button==0&&inside(mx,my,right-66,topY+4,28,28)){minimized=true;close();return true;}
-            if(button==0&&inside(mx,my,right-34,topY+4,28,28)){close();return true;}
-            int searchW=Math.max(70,(right-layout.centerX)/3);
-            if(profileModal&&button==0){
-                int mw=Math.min(330,width-24),mh=206,mx0=(width-mw)/2,my0=(height-mh)/2,by=my0+mh-34;
-                if(inside(mx,my,mx0+12,my0+34,mw-24,24)){searchFocused=false;return true;}
-                List<String> profiles=CloverProfiles.list();
-                for(int i=0;i<Math.min(4,profiles.size());i++)if(inside(mx,my,mx0+12,my0+66+i*21,mw-24,19)){selectedProfile=profiles.get(i);profileName=selectedProfile;return true;}
-                if(inside(mx,my,mx0+12,by,88,23)){if(CloverProfiles.save(profileName))selectedProfile=profileName.trim().toLowerCase(java.util.Locale.ROOT);return true;}
+        mouseXCache=mx;mouseYCache=my;
+        if(profileModal){
+            if(button==0){int mw=Math.min(330,width-24),mx0=(width-mw)/2,my0=(height-206)/2,by=my0+172;
+                if(inside(mx,my,mx0+12,my0+34,mw-24,24))return true;
+                List<String> p=CloverProfiles.list();for(int i=0;i<Math.min(4,p.size());i++)if(inside(mx,my,mx0+12,my0+66+i*21,mw-24,19)){selectedProfile=p.get(i);profileName=selectedProfile;return true;}
+                if(inside(mx,my,mx0+12,by,88,23)){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}
                 if(inside(mx,my,mx0+106,by,88,23)){if(!selectedProfile.isEmpty())CloverProfiles.load(selectedProfile);profileModal=false;return true;}
-                if(inside(mx,my,mx0+200,by,Math.max(60,mw-212),23)){if(!selectedProfile.isEmpty()){CloverProfiles.delete(selectedProfile);selectedProfile="";}return true;}
-                return true;
+                if(inside(mx,my,mx0+200,by,Math.max(60,mw-212),23)){if(!selectedProfile.isEmpty())CloverProfiles.delete(selectedProfile);selectedProfile="";return true;}
+            }return true;
+        }
+        if(themeDropdown){if(button==0){int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48;for(int i=0;i<Theme.Preset.values().length;i++)if(inside(mx,my,x,y+4+i*18,112,18)){Theme.select(Theme.Preset.values()[i]);ModConfig.accentTheme=i;ModConfig.save();themeDropdown=false;return true;}}themeDropdown=false;return true;}
+        if(profileDropdown){if(button==0){int x=layout.centerX+110,y=layout.y+48;if(inside(mx,my,x,y+22,130,20)){profileModal=true;profileDropdown=false;return true;}if(inside(mx,my,x,y+40,130,20)){profileModal=true;profileName=selectedProfile;profileDropdown=false;return true;}if(inside(mx,my,x,y+58,130,20)){if(!selectedProfile.isEmpty())CloverProfiles.delete(selectedProfile);profileDropdown=false;return true;}}profileDropdown=false;return true;}
+        if(button==0){
+            for(int i=0;i<TABS.length;i++){int ty=layout.sidebarViewportY+i*(layout.tabHeight+4)-sidebarScroll;if(inside(mx,my,layout.sidebarViewportX,ty,layout.sidebarViewportWidth,layout.tabHeight)){selectedTab=i;selectedFeature=-1;scrollOffset=0;refreshFeatures();calculateRightContent();return true;}}
+            int right=layout.compact?layout.x+layout.width-GAP:layout.settingsX+layout.settingsWidth,top=layout.y+GAP;
+            if(inside(mx,my,right-30,top+3,26,26)){close();return true;}
+            if(inside(mx,my,right-60,top+3,26,26)){close();return true;}
+            int searchW=Math.max(90,Math.min((right-layout.centerX)/3,(right-layout.centerX)-160));
+            if(inside(mx,my,layout.centerX+6,top+5,Math.max(90,searchW),26)){searchFocused=true;return true;}
+            int profileX=layout.centerX+searchW+18;
+            if(inside(mx,my,profileX,top+5,118,26)){profileDropdown=true;return true;}
+            if(inside(mx,my,profileX+122,top+5,90,26)){themeDropdown=true;return true;}
+            int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
+            if(inside(mx,my,vx,vy,vw,vh)){
+                int idx=(int)((my-vy+scrollOffset)/ROW_HEIGHT);
+                if(idx>=0&&idx<visibleFeatures.size()){selectedFeature=idx;calculateRightContent();CloverFeature f=visibleFeatures.get(idx);int toggleX=vx+vw-48,ry=vy+idx*ROW_HEIGHT-scrollOffset;if(inside(mx,my,toggleX,ry+17,40,20))f.setEnabled(!f.enabled());return true;}
             }
-            if(button==0&&inside(mx,my,layout.centerX+7,topY+5,searchW,26)){searchFocused=true;return true;}
-            int controlsX=layout.centerX+searchW+18;
-            if(button==0&&right-layout.centerX>330&&inside(mx,my,controlsX,topY+4,90,28)){profileModal=true;searchFocused=false;return true;}
-            if(button==0&&right-layout.centerX>440
-                    &&inside(mx,my,Math.min(right-110,controlsX+90),topY+4,76,28)){
-                cycleTheme();
-                return true;
-            }
-            int centerW=layout.compact?(right-layout.centerX):layout.centerWidth;
-            int listX=layout.centerX+8,listY=layout.contentY+LIST_TOP,listW=centerW-16;
-            int listH=Math.max(30,layout.contentHeight-LIST_TOP-8);
-            if(inside(mx,my,listX,listY,listW,listH)){
-                int index=(int)((my-listY+scrollOffset)/ROW_HEIGHT);
-                if(index>=0&&index<visibleFeatures.size()){
-                    selectedFeature=index;
-                    CloverFeature feature=visibleFeatures.get(index);
-                    if(button==1){feature.setEnabled(!feature.enabled());return true;}
-                    int toggleX=listX+listW-52,toggleY=listY+index*ROW_HEIGHT-scrollOffset+16;
-                    if(inside(mx,my,toggleX,toggleY,40,20))feature.setEnabled(!feature.enabled());
-                    return true;
-                }
-            }
-            if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+12,layout.contentY+173,layout.settingsWidth-24,16)){draggingSlider=0;setSliderValue(0,mx);return true;}
-            if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+12,layout.contentY+220,layout.settingsWidth-24,16)){draggingSlider=1;setSliderValue(1,mx);return true;}
-            if(button==0&&!layout.compact&&inside(mx,my,layout.settingsX+8,layout.contentY+244,layout.settingsWidth-16,34)){
-                cycleTheme();
-                return true;
-            }
-            if(button==0&&!layout.compact&&selectedFeature>=0&&selectedFeature<visibleFeatures.size()){
-                int sx=layout.settingsX+layout.settingsWidth-58,sy=layout.contentY+110;
-                if(inside(mx,my,sx,sy,40,20)){
-                    CloverFeature feature=visibleFeatures.get(selectedFeature);
-                    feature.setEnabled(!feature.enabled());return true;
-                }
+            if(!layout.compact){
+                int rx=layout.settingsViewportX,ry=layout.settingsViewportY-settingsScroll,rw=layout.settingsViewportWidth;
+                if(selectedFeature<0){
+                    if(inside(mx,my,rx+12,ry+109,rw-24,16)){draggingSlider=0;setSliderValue(0,mx);return true;}
+                    if(inside(mx,my,rx+12,ry+163,rw-24,16)){draggingSlider=1;setSliderValue(1,mx);return true;}
+                    if(inside(mx,my,rx,ry+217,rw,28)){cycleTheme();return true;}
+                    if(inside(mx,my,rx,ry+253,rw,24)){Theme.setCustomAccent(Theme.ACCENT);Theme.select(Theme.Preset.CLOVER);ModConfig.accentTheme=0;ModConfig.accentHex="#2BE36B";ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+307,rw,25)){ModConfig.uiScale=(ModConfig.uiScale+1)%5;ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+339,rw,24)){ModConfig.showBounds=!ModConfig.showBounds;ModConfig.save();return true;}
+                }else if(inside(mx,my,rx+rw-42,ry+76,40,20)){CloverFeature f=visibleFeatures.get(selectedFeature);f.setEnabled(!f.enabled());return true;}
             }
         }
+        if(button==1){int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;if(inside(mx,my,vx,vy,vw,vh)){int idx=(int)((my-vy+scrollOffset)/ROW_HEIGHT);if(idx>=0&&idx<visibleFeatures.size()){CloverFeature f=visibleFeatures.get(idx);f.setEnabled(!f.enabled());return true;}}}
         return super.mouseClicked(mx,my,button);
     }
-
-    @Override public boolean mouseScrolled(double mouseX,double mouseY,double horizontalAmount,double verticalAmount){
+    @Override public boolean mouseScrolled(double mx,double my,double horizontal,double vertical){
         if(layout==null)layout=new UiLayout(width,height);
-        int centerW=layout.compact?layout.width-(layout.centerX-layout.x)-UiLayout.GAP:layout.centerWidth;
-        int listX=layout.centerX+8,listY=layout.contentY+LIST_TOP;
-        if(inside(mouseX,mouseY,listX,listY,centerW-16,Math.max(30,layout.contentHeight-LIST_TOP-8))){
-            int max=Math.max(0,visibleFeatures.size()*ROW_HEIGHT-(layout.contentHeight-LIST_TOP-8));
-            scrollOffset=Math.max(0,Math.min(max,scrollOffset-(int)(verticalAmount*ROW_HEIGHT*2)));
-            return true;
-        }
-        return super.mouseScrolled(mouseX,mouseY,horizontalAmount,verticalAmount);
+        if(inside(mx,my,layout.sidebarViewportX,layout.sidebarViewportY,layout.sidebarViewportWidth,layout.sidebarViewportHeight)){int max=Math.max(0,TABS.length*(layout.tabHeight+4)-layout.sidebarViewportHeight);sidebarScroll=clamp(sidebarScroll-(int)(vertical*24),0,max);return true;}
+        if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,visibleFeatures.size()*ROW_HEIGHT-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)(vertical*ROW_HEIGHT*2),0,max);return true;}
+        if(!layout.compact&&inside(mx,my,layout.settingsViewportX,layout.settingsViewportY,layout.settingsViewportWidth,layout.settingsViewportHeight)){settingsScroll=clamp(settingsScroll-(int)(vertical*24),0,Math.max(0,rightContentHeight-layout.settingsViewportHeight));return true;}
+        return super.mouseScrolled(mx,my,horizontal,vertical);
     }
-
-    @Override public boolean mouseDragged(double mouseX,double mouseY,int button,double deltaX,double deltaY){
-        if(button==0&&draggingSlider>=0){setSliderValue(draggingSlider,mouseX);return true;}
-        return super.mouseDragged(mouseX,mouseY,button,deltaX,deltaY);
+    @Override public boolean mouseDragged(double mx,double my,int button,double dx,double dy){mouseXCache=mx;mouseYCache=my;if(button==0&&draggingSlider>=0){setSliderValue(draggingSlider,mx);return true;}return super.mouseDragged(mx,my,button,dx,dy);}
+    @Override public boolean mouseReleased(double mx,double my,int button){if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}return super.mouseReleased(mx,my,button);}
+    @Override public boolean keyPressed(int key,int scan,int mods){
+        if(profileModal){if(key==GLFW.GLFW_KEY_ESCAPE){profileModal=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!profileName.isEmpty()){profileName=profileName.substring(0,profileName.length()-1);return true;}if(key==GLFW.GLFW_KEY_ENTER){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}}
+        if(searchFocused){if(key==GLFW.GLFW_KEY_ESCAPE){searchFocused=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!search.isEmpty()){search=search.substring(0,search.length()-1);refreshFeatures();return true;}if(key==GLFW.GLFW_KEY_ENTER){searchFocused=false;return true;}}
+        if(key==GLFW.GLFW_KEY_ESCAPE){close();return true;}return super.keyPressed(key,scan,mods);
     }
-
-    @Override public boolean mouseReleased(double mouseX,double mouseY,int button){
-        if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}
-        return super.mouseReleased(mouseX,mouseY,button);
-    }
-
-    @Override public boolean keyPressed(int keyCode,int scanCode,int modifiers){
-        if(profileModal){
-            if(keyCode==GLFW.GLFW_KEY_ESCAPE){profileModal=false;return true;}
-            if(keyCode==GLFW.GLFW_KEY_BACKSPACE&&!profileName.isEmpty()){profileName=profileName.substring(0,profileName.length()-1);return true;}
-            if(keyCode==GLFW.GLFW_KEY_ENTER){if(CloverProfiles.save(profileName))selectedProfile=profileName.trim().toLowerCase(java.util.Locale.ROOT);return true;}
-        }
-        if(searchFocused){
-            if(keyCode==GLFW.GLFW_KEY_ESCAPE){searchFocused=false;return true;}
-            if(keyCode==GLFW.GLFW_KEY_BACKSPACE&&!search.isEmpty()){search=search.substring(0,search.length()-1);scrollOffset=0;refreshFeatures();return true;}
-            if(keyCode==GLFW.GLFW_KEY_ENTER){searchFocused=false;return true;}
-        }
-        if(keyCode==GLFW.GLFW_KEY_ESCAPE||keyCode==GLFW.GLFW_KEY_X){close();return true;}
-        return super.keyPressed(keyCode,scanCode,modifiers);
-    }
-
-    @Override public boolean charTyped(char chr,int modifiers){
-        if(profileModal&&!Character.isISOControl(chr)&&profileName.length()<32){profileName+=chr;return true;}
-        if(searchFocused&&!Character.isISOControl(chr)&&search.length()<48){search+=chr;scrollOffset=0;refreshFeatures();return true;}
-        return super.charTyped(chr,modifiers);
-    }
+    @Override public boolean charTyped(char chr,int modifiers){if(profileModal&&!Character.isISOControl(chr)&&profileName.length()<32){profileName+=chr;return true;}if(searchFocused&&!Character.isISOControl(chr)&&search.length()<48){search+=chr;refreshFeatures();return true;}return super.charTyped(chr,modifiers);}
 }
