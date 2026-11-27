@@ -285,7 +285,7 @@ public final class BlackCloverScreen extends Screen {
                 drawSlider(c,vx+12,cy+163,vw-24,ModConfig.backgroundDim,0.0,0.75,1);
                 drawSettingLabel(c,"Цветовая тема",vx,cy+199,vw);
                 RoundedRect.border(c,vx,cy+217,vw,28,6,1,Theme.BORDER,Theme.CARD);
-                drawText(c,Theme.selected().name(),vx+8,cy+226,Theme.accentColor(),vw-16);
+                drawText(c,Theme.displayName(Theme.selected()),vx+8,cy+226,Theme.accentColor(),vw-16);
                 RoundedRect.fill(c,vx,cy+253,vw,24,6,Theme.CARD_HOVER);
                 drawCentered(c,"Сбросить цвет",vx+vw/2,cy+261,Theme.TEXT);
                 drawSettingLabel(c,"Масштаб меню",vx,cy+289,vw);
@@ -365,10 +365,15 @@ public final class BlackCloverScreen extends Screen {
         for(int i=0;i<4;i++){int bx=mx+12+i*(buttonW+2);RoundedRect.fill(c,bx,by,buttonW,23,6,Theme.CARD_HOVER);drawCentered(c,labels[i],bx+buttonW/2,by+7,i==3?Theme.DANGER:Theme.TEXT);}
     }
     private void renderThemeDropdown(DrawContext c){
-        int x=themeMenuX,y=layout.y+48,w=112;
-        RoundedRect.border(c,x,y,w,100,7,1,Theme.BORDER,Theme.PANEL);
+        int w=190,h=190,x=clamp(themeMenuX,4,Math.max(4,width-w-4)),y=layout.y+48;
+        RoundedRect.border(c,x,y,w,h,8,1,Theme.brightAccentColor(),Theme.panelColor());
         Theme.Preset[] p=Theme.Preset.values();
-        for(int i=0;i<p.length;i++)c.drawText(textRenderer,p[i].name(),x+8,y+8+i*18,p[i]==Theme.selected()?Theme.accentColor():Theme.TEXT_DIM,false);
+        for(int i=0;i<p.length;i++){
+            int col=i/10,row=i%10,ix=x+6+col*92,iy=y+5+row*18;
+            int color=i==Theme.selected().ordinal()?Theme.accentColor():Theme.accent2Color();
+            RoundedRect.fill(c,ix,iy+3,9,9,5,color);
+            drawText(c,Theme.displayName(p[i]),ix+14,iy+3,p[i]==Theme.selected()?Theme.TEXT:Theme.TEXT_DIM,72);
+        }
     }
     private void renderProfileDropdown(DrawContext c){
         int x=profileMenuX,y=layout.y+48;
@@ -406,7 +411,7 @@ public final class BlackCloverScreen extends Screen {
                 if(inside(mx,my,mx0+18+3*bw,by,bw,23)){if(!selectedProfile.isEmpty()&&CloverProfiles.delete(selectedProfile))selectedProfile="";return true;}
             }return true;
         }
-        if(themeDropdown){if(button==0){int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48;for(int i=0;i<Theme.Preset.values().length;i++)if(inside(mx,my,x,y+4+i*18,112,18)){Theme.select(Theme.Preset.values()[i]);ModConfig.accentTheme=i;ModConfig.save();themeDropdown=false;return true;}}themeDropdown=false;return true;}
+        if(themeDropdown){if(button==0){int x=clamp(themeMenuX,4,Math.max(4,width-194)),y=layout.y+48;for(int i=0;i<Theme.Preset.values().length;i++){int col=i/10,row=i%10;if(inside(mx,my,x+4+col*92,y+3+row*18,92,18)){Theme.select(Theme.Preset.values()[i]);ModConfig.accentTheme=i;ModConfig.accentHex=String.format(java.util.Locale.ROOT,"#%06X",Theme.accentColor()&0xFFFFFF);ModConfig.save();themeDropdown=false;return true;}}}themeDropdown=false;return true;}
         if(profileDropdown){if(button==0){int x=layout.centerX+110,y=layout.y+48;if(inside(mx,my,x,y+22,130,20)){profileModal=true;profileDropdown=false;return true;}if(inside(mx,my,x,y+40,130,20)){profileModal=true;profileName=selectedProfile;profileDropdown=false;return true;}if(inside(mx,my,x,y+58,130,20)){if(!selectedProfile.isEmpty())CloverProfiles.delete(selectedProfile);profileDropdown=false;return true;}}profileDropdown=false;return true;}
         if(button==0){
             for(int i=0;i<TABS.length;i++){int ty=layout.sidebarViewportY+i*(layout.tabHeight+4)-sidebarScroll;if(inside(mx,my,layout.sidebarViewportX,ty,layout.sidebarViewportWidth,layout.tabHeight)){tabScrollOffsets[selectedTab]=scrollOffset;selectedTab=i;selectedFeature=-1;scrollOffset=tabScrollOffsets[i];refreshFeatures();calculateRightContent();return true;}}
