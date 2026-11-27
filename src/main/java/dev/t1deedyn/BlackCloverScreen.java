@@ -276,7 +276,7 @@ public final class BlackCloverScreen extends Screen {
         CloverMark.draw(c,sx+9,sy+9,24,Theme.accentColor());
         drawText(c,general?"ОБЩИЕ НАСТРОЙКИ МЕНЮ":"НАСТРОЙКИ ФУНКЦИИ",sx+39,sy+17,Theme.accentColor(),sw-48);
         int vx=layout.settingsViewportX,vy=layout.settingsViewportY,vw=layout.settingsViewportWidth,vh=layout.settingsViewportHeight;
-        int total=general?390:(selectedFeature>=0&&selectedFeature<visibleFeatures.size()&&(visibleFeatures.get(selectedFeature).id()==17||visibleFeatures.get(selectedFeature).id()==18||visibleFeatures.get(selectedFeature).id()==19)?420:196);
+        int total=general?390:(selectedFeature>=0&&selectedFeature<visibleFeatures.size()&&(visibleFeatures.get(selectedFeature).id()==17||visibleFeatures.get(selectedFeature).id()==18||visibleFeatures.get(selectedFeature).id()==19||visibleFeatures.get(selectedFeature).id()==20)?420:196);
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
             int cy=vy-settingsScroll;
@@ -342,6 +342,13 @@ public final class BlackCloverScreen extends Screen {
                     drawCentered(c,"Сменить качество",vx+vw/2,cy+246,Theme.TEXT);
                     drawSettingLabel(c,"Интенсивность: "+(int)Math.round(ModConfig.skyIntensity*100)+"%",vx,cy+274,vw);
                     drawSlider(c,vx+8,cy+288,vw-16,ModConfig.skyIntensity,0,1,5);
+                }else if(feature.id()==20){
+                    drawSettingLabel(c,"Стиль: "+EntityAnimationsRenderer.modeName(),vx,cy+166,vw);
+                    RoundedRect.border(c,vx,cy+184,vw,24,6,1,Theme.BORDER,Theme.CARD);
+                    drawCentered(c,"Сменить стиль",vx+vw/2,cy+192,Theme.TEXT);
+                    drawSettingLabel(c,"Интенсивность: "+(int)Math.round(ModConfig.entityAnimationIntensity*100)+"%",vx,cy+220,vw);
+                    drawSlider(c,vx+8,cy+238,vw-16,ModConfig.entityAnimationIntensity,0,1,6);
+                    drawSettingLabel(c,"Применяется к моделям игроков",vx,cy+274,vw);
                 }
             }
         }finally{c.disableScissor();}
@@ -444,7 +451,7 @@ public final class BlackCloverScreen extends Screen {
     private void setSliderValue(int id,double mouseX){
         int x=layout.settingsViewportX+12,w=layout.settingsViewportWidth-24;
         double ratio=clamp((mouseX-(x+6.0))/Math.max(1,w-12),0,1);
-        if(id==0)ModConfig.menuOpacity=0.72+ratio*0.28;else if(id==1)ModConfig.backgroundDim=ratio*0.75;else if(id==2)ModConfig.fullbrightBrightness=(int)Math.round(ratio*100);else if(id==3)ModConfig.zoomDefault=1.5+ratio*8.5;else if(id==4)ModConfig.zoomSpeed=1+ratio*19;else if(id==5)ModConfig.skyIntensity=ratio;
+        if(id==0)ModConfig.menuOpacity=0.72+ratio*0.28;else if(id==1)ModConfig.backgroundDim=ratio*0.75;else if(id==2)ModConfig.fullbrightBrightness=(int)Math.round(ratio*100);else if(id==3)ModConfig.zoomDefault=1.5+ratio*8.5;else if(id==4)ModConfig.zoomSpeed=1+ratio*19;else if(id==5)ModConfig.skyIntensity=ratio;else if(id==6)ModConfig.entityAnimationIntensity=ratio;
         ModConfig.save();
     }
     private void renderShapeTest(DrawContext c){
@@ -544,6 +551,9 @@ public final class BlackCloverScreen extends Screen {
                         if(inside(mx,my,rx,ry+184,rw,24)){Modules.CUSTOM_SKY.cycleMode();return true;}
                         if(inside(mx,my,rx,ry+238,rw,24)){Modules.CUSTOM_SKY.cycleQuality();return true;}
                         if(inside(mx,my,rx+8,ry+288,rw-16,16)){draggingSlider=5;setSliderValue(5,mx);return true;}
+                    }else if(f.id()==20){
+                        if(inside(mx,my,rx,ry+184,rw,24)){Modules.ENTITY_ANIMATIONS.cycleMode();return true;}
+                        if(inside(mx,my,rx+8,ry+238,rw-16,16)){draggingSlider=6;setSliderValue(6,mx);return true;}
                     }
                 }
             }
