@@ -80,7 +80,7 @@ public final class ModConfig {
             menuAnimations = bool(j, "menuAnimations", menuAnimations);
             menuOpacity = clamp(number(j, "menuOpacity", menuOpacity), 0.72, 1.0);
             backgroundDim = clamp(number(j, "backgroundDim", backgroundDim), 0.0, 0.75);
-            accentTheme = clampInt(integer(j, "accentTheme", 0), 0, 4);
+            accentTheme = clampInt(integer(j, "accentTheme", 0), 0, 19);
             accentHex = accentTheme == 0 ? "#2BE36B" : (validHex(string(j, "accentHex", accentHex)) ? string(j, "accentHex", accentHex).toUpperCase(java.util.Locale.ROOT) : "#2BE36B");
             uiScale = clampInt(integer(j, "uiScale", 0), 0, 4);
             showBounds = bool(j, "showBounds", false);
