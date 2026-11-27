@@ -40,6 +40,8 @@ public final class BlackCloverScreen extends Screen {
     private boolean scaleRestored;
     private static boolean widthWarningLogged;
     private boolean shapeTest;
+    private boolean compactFeatureSettings, compactSkySlider;
+    private int compactSkySliderId=-1;
 
     public BlackCloverScreen(){
         super(Text.literal("Чёрный Клевер"));
@@ -149,6 +151,7 @@ public final class BlackCloverScreen extends Screen {
             renderTopbar(c,mouseX,mouseY);
             renderFeatureList(c,mouseX,mouseY);
             if(!layout.compact)renderSettings(c,mouseX,mouseY);
+            else if(compactFeatureSettings)renderCompactSkySettings(c,mouseX,mouseY);
             if(shapeTest)renderShapeTest(c);
             if(profileModal)renderProfileModal(c);
             if(themeDropdown)renderThemeDropdown(c);
@@ -359,6 +362,44 @@ public final class BlackCloverScreen extends Screen {
         drawScrollbar(c,vx+vw-2,vy,vh,total,settingsScroll,Theme.accentColor());
         if(ModConfig.showBounds)RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFF55AAFF,0x00000000);
     }
+    private void renderCompactSkySettings(DrawContext c,int mx,int my){
+        if(selectedFeature<0||selectedFeature>=visibleFeatures.size()||visibleFeatures.get(selectedFeature).id()!=19)return;
+        int px=layout.x+GAP,py=layout.contentY,pw=layout.width-GAP*2,ph=layout.contentHeight;
+        RoundedRect.fill(c,px,py,pw,ph,9,0xF20A0E16);
+        RoundedRect.border(c,px,py,pw,ph,9,1,Theme.brightAccentColor(),Theme.PANEL);
+        drawText(c,"CUSTOM SKY",px+12,py+12,Theme.accentColor(),pw-72);
+        RoundedRect.fill(c,px+pw-54,py+7,44,24,6,Theme.CARD_HOVER);
+        drawCentered(c,"НАЗАД",px+pw-32,py+15,Theme.TEXT);
+        int contentTop=py+42,contentBottom=py+ph-8;
+        c.enableScissor(px+6,contentTop,px+pw-6,contentBottom);
+        try{
+            int y=contentTop-settingsScroll;
+            drawSettingLabel(c,"Состояние CustomSky",px+12,y+2,pw-24);
+            drawToggle(c,19,px+pw-54,y-3,ModConfig.customSkyEnabled,false);
+            drawSettingLabel(c,"Режим: "+CustomSkyRenderer.modeName(),px+12,y+34,pw-24);
+            RoundedRect.border(c,px+10,y+52,pw-20,24,6,1,Theme.BORDER,Theme.CARD);
+            drawCentered(c,"Сменить режим",px+pw/2,y+60,Theme.TEXT);
+            drawSettingLabel(c,"Качество: "+(ModConfig.skyQuality==0?"LOW":ModConfig.skyQuality==1?"MEDIUM":"HIGH"),px+12,y+84,pw-24);
+            RoundedRect.border(c,px+10,y+102,pw-20,24,6,1,Theme.BORDER,Theme.CARD);
+            drawCentered(c,"Сменить качество",px+pw/2,y+110,Theme.TEXT);
+            drawSettingLabel(c,"Интенсивность: "+(int)Math.round(ModConfig.skyIntensity*100)+"%",px+12,y+134,pw-24);
+            drawSlider(c,px+10,y+152,pw-20,ModConfig.skyIntensity,0,1,5);
+            drawSettingLabel(c,"Яркость: "+String.format(java.util.Locale.ROOT,"%.2fx",ModConfig.skyBrightness),px+12,y+174,pw-24);
+            drawSlider(c,px+10,y+192,pw-20,(ModConfig.skyBrightness-0.5)/1.5,0,1,7);
+            drawSettingLabel(c,"Насыщенность: "+(int)Math.round(ModConfig.skySaturation*100)+"%",px+12,y+214,pw-24);
+            drawSlider(c,px+10,y+232,pw-20,ModConfig.skySaturation/2.0,0,1,8);
+        }finally{c.disableScissor();}
+        int max=Math.max(0,286-(ph-50));
+        if(max>0)drawScrollbar(c,px+pw-5,contentTop,Math.max(1,contentBottom-contentTop),286,settingsScroll,Theme.accentColor());
+    }
+    private void setCompactSkySlider(int id,double mouseX){
+        int px=layout.x+GAP,pw=layout.width-GAP*2,x=px+10,w=pw-20;
+        double ratio=clamp((mouseX-(x+6.0))/Math.max(1,w-12),0,1);
+        if(id==5)ModConfig.skyIntensity=ratio;
+        else if(id==7)ModConfig.skyBrightness=0.5+ratio*1.5;
+        else if(id==8)ModConfig.skySaturation=ratio*2.0;
+        ModConfig.save();
+    }
     private void drawSettingLabel(DrawContext c,String label,int x,int y,int w){drawText(c,label,x,y,Theme.TEXT_DIM,w);}
     private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int id){
         int trackW=Math.max(12,w),centerMin=x+6,centerMax=x+trackW-6,center= centerMin+(int)Math.round((centerMax-centerMin)*clamp((value-min)/(max-min),0,1));
@@ -496,6 +537,18 @@ public final class BlackCloverScreen extends Screen {
         }
         if(themeDropdown){if(button==0){int x=clamp(themeMenuX,4,Math.max(4,width-194)),y=layout.y+48;for(int i=0;i<Theme.Preset.values().length;i++){int col=i/10,row=i%10;if(inside(mx,my,x+4+col*92,y+3+row*18,92,18)){Theme.select(Theme.Preset.values()[i]);ModConfig.accentTheme=i;ModConfig.accentHex=String.format(java.util.Locale.ROOT,"#%06X",Theme.accentColor()&0xFFFFFF);ModConfig.save();themeDropdown=false;return true;}}}themeDropdown=false;return true;}
         if(profileDropdown){if(button==0){int x=layout.centerX+110,y=layout.y+48;if(inside(mx,my,x,y+22,130,20)){profileModal=true;profileDropdown=false;return true;}if(inside(mx,my,x,y+40,130,20)){profileModal=true;profileName=selectedProfile;profileDropdown=false;return true;}if(inside(mx,my,x,y+58,130,20)){if(!selectedProfile.isEmpty())CloverProfiles.delete(selectedProfile);profileDropdown=false;return true;}}profileDropdown=false;return true;}
+        if(compactFeatureSettings&&button==0){
+            int px=layout.x+GAP,py=layout.contentY,pw=layout.width-GAP*2;
+            if(inside(mx,my,px+pw-58,py+4,54,30)){compactFeatureSettings=false;compactSkySlider=false;return true;}
+            int y=py+42-settingsScroll;
+            if(inside(mx,my,px+pw-60,y-5,54,28)){visibleFeatures.get(selectedFeature).setEnabled(!ModConfig.customSkyEnabled);return true;}
+            if(inside(mx,my,px+10,y+52,pw-20,24)){Modules.CUSTOM_SKY.cycleMode();return true;}
+            if(inside(mx,my,px+10,y+102,pw-20,24)){Modules.CUSTOM_SKY.cycleQuality();return true;}
+            if(inside(mx,my,px+10,y+152,pw-20,18)){compactSkySlider=true;compactSkySliderId=5;setCompactSkySlider(5,mx);return true;}
+            if(inside(mx,my,px+10,y+192,pw-20,18)){compactSkySlider=true;compactSkySliderId=7;setCompactSkySlider(7,mx);return true;}
+            if(inside(mx,my,px+10,y+232,pw-20,18)){compactSkySlider=true;compactSkySliderId=8;setCompactSkySlider(8,mx);return true;}
+            return true;
+        }
         if(button==0){
             for(int i=0;i<TABS.length;i++){int ty=layout.sidebarViewportY+i*(layout.tabHeight+4)-sidebarScroll;if(inside(mx,my,layout.sidebarViewportX,ty,layout.sidebarViewportWidth,layout.tabHeight)){tabScrollOffsets[selectedTab]=scrollOffset;selectedTab=i;selectedFeature=-1;scrollOffset=tabScrollOffsets[i];refreshFeatures();calculateRightContent();return true;}}
             int right=layout.compact?layout.x+layout.width-GAP:layout.settingsX+layout.settingsWidth,top=layout.y+GAP;
@@ -569,6 +622,7 @@ public final class BlackCloverScreen extends Screen {
     }
     @Override public boolean mouseScrolled(double mx,double my,double horizontal,double vertical){
         if(layout==null)layout=new UiLayout(width,height);
+        if(compactFeatureSettings){int px=layout.x+GAP,py=layout.contentY,pw=layout.width-GAP*2,ph=layout.contentHeight;if(inside(mx,my,px,py,pw,ph)){settingsScroll=clamp(settingsScroll-(int)Math.round(vertical*24),0,Math.max(0,286-(ph-50)));return true;}}
         if(inside(mx,my,layout.sidebarViewportX,layout.sidebarViewportY,layout.sidebarViewportWidth,layout.sidebarViewportHeight)){int max=Math.max(0,TABS.length*(layout.tabHeight+4)-layout.sidebarViewportHeight);sidebarScroll=clamp(sidebarScroll-(int)Math.round(vertical*28),0,max);return true;}
         if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)Math.round(vertical*28),0,max);tabScrollOffsets[selectedTab]=scrollOffset;return true;}
         if(!layout.compact&&inside(mx,my,layout.settingsViewportX,layout.settingsViewportY,layout.settingsViewportWidth,layout.settingsViewportHeight)){settingsScroll=clamp(settingsScroll-(int)(vertical*24),0,Math.max(0,rightContentHeight-layout.settingsViewportHeight));return true;}
@@ -576,6 +630,7 @@ public final class BlackCloverScreen extends Screen {
     }
     @Override public boolean mouseDragged(double mx,double my,int button,double dx,double dy){
         mouseXCache=mx;mouseYCache=my;
+        if(button==0&&compactSkySlider){setCompactSkySlider(compactSkySliderId,mx);return true;}
         if(button==0&&draggingSlider>=0){setSliderValue(draggingSlider,mx);return true;}
         if(button==0&&draggingListScrollbar){
             int vh=layout.centerViewportHeight,thumb=Math.max(18,vh*vh/Math.max(1,listContentHeight)),track=Math.max(1,vh-thumb);
@@ -590,11 +645,13 @@ public final class BlackCloverScreen extends Screen {
         return super.mouseDragged(mx,my,button,dx,dy);
     }
     @Override public boolean mouseReleased(double mx,double my,int button){
+        if(button==0&&compactSkySlider){compactSkySlider=false;compactSkySliderId=-1;return true;}
         if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}
         if(button==0&&draggingListScrollbar){draggingListScrollbar=false;return true;}
         if(button==0){
             if(!touchScrolling&&pendingRow>=0&&pendingRow<visibleFeatures.size()){
                 selectedFeature=pendingRow;calculateRightContent();
+                compactFeatureSettings=layout.compact&&visibleFeatures.get(pendingRow).id()==19;settingsScroll=0;
                 if(pendingRowToggle){CloverFeature feature=visibleFeatures.get(pendingRow);feature.setEnabled(!feature.enabled());}
             }
             pendingRow=-1;pendingRowToggle=false;
@@ -605,7 +662,7 @@ public final class BlackCloverScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int mods){
         if(profileModal){if(key==GLFW.GLFW_KEY_ESCAPE){profileModal=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!profileName.isEmpty()){profileName=profileName.substring(0,profileName.length()-1);return true;}if(key==GLFW.GLFW_KEY_ENTER){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}}
         if(searchFocused){if(key==GLFW.GLFW_KEY_ESCAPE){searchFocused=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!search.isEmpty()){search=search.substring(0,search.length()-1);refreshFeatures();return true;}if(key==GLFW.GLFW_KEY_ENTER){searchFocused=false;return true;}}
-        if(key==GLFW.GLFW_KEY_ESCAPE){close();return true;}
+        if(key==GLFW.GLFW_KEY_ESCAPE){if(compactFeatureSettings){compactFeatureSettings=false;compactSkySlider=false;return true;}close();return true;}
         if(layout!=null){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);if(key==GLFW.GLFW_KEY_UP){scrollOffset=clamp(scrollOffset-28,0,max);return true;}if(key==GLFW.GLFW_KEY_DOWN){scrollOffset=clamp(scrollOffset+28,0,max);return true;}if(key==GLFW.GLFW_KEY_PAGE_UP){scrollOffset=clamp(scrollOffset-layout.centerViewportHeight,0,max);return true;}if(key==GLFW.GLFW_KEY_PAGE_DOWN){scrollOffset=clamp(scrollOffset+layout.centerViewportHeight,0,max);return true;}if(key==GLFW.GLFW_KEY_HOME){scrollOffset=0;return true;}if(key==GLFW.GLFW_KEY_END){scrollOffset=max;return true;}}
         return super.keyPressed(key,scan,mods);
     }
