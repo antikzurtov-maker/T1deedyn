@@ -7,7 +7,8 @@
     "LightmapTextureManagerMixin",
     "GameRendererMixin",
     "MouseMixin",
-    "ClientWorldSkyMixin"
+    "ClientWorldSkyMixin",
+    "PlayerEntityAnimationsMixin"
   ],
   "injectors": { "defaultRequire": 1 }
 }
