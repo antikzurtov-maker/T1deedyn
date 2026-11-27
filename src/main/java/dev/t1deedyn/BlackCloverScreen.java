@@ -398,7 +398,6 @@ public final class BlackCloverScreen extends Screen {
         if(id==5)ModConfig.skyIntensity=ratio;
         else if(id==7)ModConfig.skyBrightness=0.5+ratio*1.5;
         else if(id==8)ModConfig.skySaturation=ratio*2.0;
-        ModConfig.save();
     }
     private void drawSettingLabel(DrawContext c,String label,int x,int y,int w){drawText(c,label,x,y,Theme.TEXT_DIM,w);}
     private void drawSlider(DrawContext c,int x,int y,int w,double value,double min,double max,int id){
@@ -645,7 +644,7 @@ public final class BlackCloverScreen extends Screen {
         return super.mouseDragged(mx,my,button,dx,dy);
     }
     @Override public boolean mouseReleased(double mx,double my,int button){
-        if(button==0&&compactSkySlider){compactSkySlider=false;compactSkySliderId=-1;return true;}
+        if(button==0&&compactSkySlider){ModConfig.save();compactSkySlider=false;compactSkySliderId=-1;return true;}
         if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}
         if(button==0&&draggingListScrollbar){draggingListScrollbar=false;return true;}
         if(button==0){
