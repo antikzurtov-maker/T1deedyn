@@ -26,6 +26,9 @@ public final class T1deedynClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ModConfig.load();
+        Modules.initialize();
+        Modules.FULLBRIGHT.setEnabled(ModConfig.fullbrightEnabled);
+        Modules.ZOOM.setEnabled(ModConfig.zoomEnabled);
         Theme.select(Theme.Preset.values()[Math.max(0, Math.min(Theme.Preset.values().length - 1, ModConfig.accentTheme))]);
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.t1deedyn.open_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X,
@@ -38,6 +41,7 @@ public final class T1deedynClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleAutoBerry.wasPressed()) AutoBerry.toggle();
+            ModuleManager.tick();
             while (openMenu.wasPressed()) {
                 if (client.currentScreen == null) client.setScreen(new BlackCloverScreen());
                 else if (client.currentScreen instanceof BlackCloverScreen) client.setScreen(null);
