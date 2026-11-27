@@ -17,6 +17,7 @@ public final class CustomSkyRenderer {
     private static final float[] DAY = {0.36f, 0.62f, 0.94f};
     private static final float[] DUSK = {0.88f, 0.32f, 0.28f};
     private static final float[] DEEP_NIGHT = {0.045f, 0.055f, 0.16f};
+    private static final float[] DYNAMIC = new float[3];
     private static final String[] MODE_NAMES = {
             "Vanilla", "Sunset", "Sunrise", "Night", "Starry", "Purple", "Dynamic"
     };
@@ -88,10 +89,19 @@ public final class CustomSkyRenderer {
     }
 
     private static float[] dynamicPalette(float day) {
-        if (day < 0.20f || day >= 0.82f) return DEEP_NIGHT;
-        if (day < 0.28f) return SUNRISE;
-        if (day < 0.68f) return DAY;
-        return DUSK;
+        if (day < 0.20f) return DEEP_NIGHT;
+        if (day < 0.28f) return blendPalette(DEEP_NIGHT, SUNRISE, (day - 0.20f) / 0.08f);
+        if (day < 0.68f) return blendPalette(SUNRISE, DAY, (day - 0.28f) / 0.40f);
+        if (day < 0.82f) return blendPalette(DAY, DUSK, (day - 0.68f) / 0.14f);
+        return blendPalette(DUSK, DEEP_NIGHT, (day - 0.82f) / 0.18f);
+    }
+
+    private static float[] blendPalette(float[] from, float[] to, float amount) {
+        float t = amount * amount * (3.0f - 2.0f * amount);
+        DYNAMIC[0] = mix(from[0], to[0], t);
+        DYNAMIC[1] = mix(from[1], to[1], t);
+        DYNAMIC[2] = mix(from[2], to[2], t);
+        return DYNAMIC;
     }
 
     private static float qualityFactor() {
