@@ -330,8 +330,10 @@ public final class BlackCloverScreen extends Screen {
         if(content<=h||h<=0)return;
         int thumb=Math.max(18,h*h/content);
         int max=content-h,top=y+(h-thumb)*offset/max;
-        c.fill(x,y,x+2,y+h,0x503A5143);
-        RoundedRect.fill(c,x,top,2,thumb,1,color);
+        boolean hover=inside(mouseXCache,mouseYCache,x-3,y,8,h);
+        int track=hover?6:3,tx=x-(track-3)/2;
+        c.fill(tx,y,tx+track,y+h,hover?0x70465A4C:0x403A5143);
+        RoundedRect.fill(c,tx,top,track,thumb,track/2,hover?color:(color&0x00FFFFFF)|0xA6000000);
     }
     private void renderCreators(DrawContext c){
         int tagW=Math.min(190,layout.width-20),tagX=layout.x+layout.width-tagW,tagY=layout.creatorY;
@@ -417,6 +419,12 @@ public final class BlackCloverScreen extends Screen {
             if(inside(mx,my,profileX,top+5,118,26)){profileDropdown=true;return true;}
             if(inside(mx,my,themeMenuX,top+5,Math.max(30,right-30-themeMenuX-8),26)){themeDropdown=true;return true;}
             int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
+            if(listContentHeight>vh&&inside(mx,my,vx+vw-5,vy,vw>0?8:1,vh)){
+                int thumb=Math.max(18,vh*vh/listContentHeight),track=Math.max(1,vh-thumb);
+                int target=clamp((int)my-vy-thumb/2,0,track);
+                scrollOffset=(int)Math.round((double)target/track*Math.max(0,listContentHeight-vh));
+                draggingListScrollbar=true;listDragStartY=(int)my;listDragStartOffset=scrollOffset;return true;
+            }
             if(inside(mx,my,vx,vy,vw,vh)){
                 int idx=(int)((my-vy-10+scrollOffset)/ROW_STEP);
                 if(idx>=0&&idx<visibleFeatures.size()){selectedFeature=idx;calculateRightContent();CloverFeature f=visibleFeatures.get(idx);int toggleX=vx+vw-50,ry=vy+10+idx*ROW_STEP-scrollOffset;if(inside(mx,my,toggleX,ry+18,40,20))f.setEnabled(!f.enabled());return true;}
@@ -442,12 +450,31 @@ public final class BlackCloverScreen extends Screen {
     @Override public boolean mouseScrolled(double mx,double my,double horizontal,double vertical){
         if(layout==null)layout=new UiLayout(width,height);
         if(inside(mx,my,layout.sidebarViewportX,layout.sidebarViewportY,layout.sidebarViewportWidth,layout.sidebarViewportHeight)){int max=Math.max(0,TABS.length*(layout.tabHeight+4)-layout.sidebarViewportHeight);sidebarScroll=clamp(sidebarScroll-(int)Math.round(vertical*28),0,max);return true;}
-        if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)Math.round(vertical*28),0,max);return true;}
+        if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)Math.round(vertical*28),0,max);tabScrollOffsets[selectedTab]=scrollOffset;return true;}
         if(!layout.compact&&inside(mx,my,layout.settingsViewportX,layout.settingsViewportY,layout.settingsViewportWidth,layout.settingsViewportHeight)){settingsScroll=clamp(settingsScroll-(int)(vertical*24),0,Math.max(0,rightContentHeight-layout.settingsViewportHeight));return true;}
         return super.mouseScrolled(mx,my,horizontal,vertical);
     }
-    @Override public boolean mouseDragged(double mx,double my,int button,double dx,double dy){mouseXCache=mx;mouseYCache=my;if(button==0&&draggingSlider>=0){setSliderValue(draggingSlider,mx);return true;}return super.mouseDragged(mx,my,button,dx,dy);}
-    @Override public boolean mouseReleased(double mx,double my,int button){if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}return super.mouseReleased(mx,my,button);}
+    @Override public boolean mouseDragged(double mx,double my,int button,double dx,double dy){
+        mouseXCache=mx;mouseYCache=my;
+        if(button==0&&draggingSlider>=0){setSliderValue(draggingSlider,mx);return true;}
+        if(button==0&&draggingListScrollbar){
+            int vh=layout.centerViewportHeight,thumb=Math.max(18,vh*vh/Math.max(1,listContentHeight)),track=Math.max(1,vh-thumb);
+            int max=Math.max(0,listContentHeight-vh);
+            scrollOffset=clamp(listDragStartOffset+(int)Math.round((my-listDragStartY)*(double)max/track),0,max);return true;
+        }
+        if(button==0&&inside(pressStartX,pressStartY,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)
+                &&Math.abs(my-pressStartY)>6){
+            touchScrolling=true;int max=Math.max(0,listContentHeight-layout.centerViewportHeight);
+            scrollOffset=clamp((int)Math.round(scrollOffset-(my-pressStartY)),0,max);pressStartY=my;return true;
+        }
+        return super.mouseDragged(mx,my,button,dx,dy);
+    }
+    @Override public boolean mouseReleased(double mx,double my,int button){
+        if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}
+        if(button==0&&draggingListScrollbar){draggingListScrollbar=false;return true;}
+        if(button==0&&touchScrolling){touchScrolling=false;return true;}
+        return super.mouseReleased(mx,my,button);
+    }
     @Override public boolean keyPressed(int key,int scan,int mods){
         if(profileModal){if(key==GLFW.GLFW_KEY_ESCAPE){profileModal=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!profileName.isEmpty()){profileName=profileName.substring(0,profileName.length()-1);return true;}if(key==GLFW.GLFW_KEY_ENTER){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}}
         if(searchFocused){if(key==GLFW.GLFW_KEY_ESCAPE){searchFocused=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!search.isEmpty()){search=search.substring(0,search.length()-1);refreshFeatures();return true;}if(key==GLFW.GLFW_KEY_ENTER){searchFocused=false;return true;}}
