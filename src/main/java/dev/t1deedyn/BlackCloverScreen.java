@@ -38,6 +38,7 @@ public final class BlackCloverScreen extends Screen {
     private int profileMenuX, themeMenuX;
     private final double previousScale;
     private boolean scaleRestored;
+    private static boolean widthWarningLogged;
 
     public BlackCloverScreen(){
         super(Text.literal("Чёрный Клевер"));
@@ -187,7 +188,7 @@ public final class BlackCloverScreen extends Screen {
         if(textRenderer.getWidth(footer)>max)footer="1.21.0 • Fabric";
         if(textRenderer.getWidth(footer)>max)footer=textRenderer.trimToWidth(footer,max);
         c.drawText(textRenderer,footer,sx+8,fy+2,Theme.TEXT_DIM,false);
-        if(ModConfig.showBounds){RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFFFFAA33,0x00000000);c.drawText(textRenderer,"content="+listContentHeight+" viewport="+vh+" max="+Math.max(0,listContentHeight-vh)+" offset="+scrollOffset,vx,vy+2,0xFFFFAA33,false);}
+        if(ModConfig.showBounds)RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFFFFAA33,0x00000000);
     }
     private void renderTopbar(DrawContext c,int mx,int my){
         int left=layout.centerX,right=layout.compact?layout.x+layout.width-GAP:layout.settingsX+layout.settingsWidth;
@@ -253,6 +254,8 @@ public final class BlackCloverScreen extends Screen {
             }
         }finally{c.disableScissor();}
         drawScrollbar(c,vx+vw-3,vy,vh,listContentHeight,scrollOffset,Theme.accentColor());
+        if(vx+vw>layout.centerX+layout.centerWidth-10&&!widthWarningLogged){widthWarningLogged=true;T1deedynClient.LOGGER.warn("Black Clover feature row exceeded center column; clipping width to parent");}
+        if(ModConfig.showBounds){RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFFFFAA33,0x00000000);c.drawText(textRenderer,"content="+listContentHeight+" viewport="+vh+" max="+Math.max(0,listContentHeight-vh)+" offset="+scrollOffset,vx,vy+2,0xFFFFAA33,false);}
         if(scrollOffset>0)c.fill(vx,vy,vx+vw,vy+2,0x182BE36B);
         if(scrollOffset<Math.max(0,listContentHeight-vh))c.fill(vx,vy+vh-2,vx+vw,vy+vh,0x182BE36B);
         if(hoverRow>=0&&!layout.compact){
