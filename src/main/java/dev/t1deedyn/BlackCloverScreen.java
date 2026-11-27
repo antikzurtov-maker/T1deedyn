@@ -92,7 +92,7 @@ public final class BlackCloverScreen extends Screen {
         scrollOffset=clamp(scrollOffset,0,max);
         if(selectedFeature>=visibleFeatures.size())selectedFeature=-1;
     }
-    private void calculateRightContent(){rightContentHeight=selectedFeature>=0?196:360;}
+    private void calculateRightContent(){rightContentHeight=selectedFeature>=0?196:390;}
     private int shortText(String value,int maxWidth){
         return textRenderer.getWidth(value)<=maxWidth?textRenderer.getWidth(value):maxWidth;
     }
@@ -178,6 +178,7 @@ public final class BlackCloverScreen extends Screen {
                 if(vw>88)drawText(c,TABS[i],vx+29,ty+(rowH-9)/2,active?Theme.TEXT:Theme.TEXT_DIM,vw-34);
             }
         }finally{c.disableScissor();}
+        drawScrollbar(c,vx+vw-3,vy,vh,TABS.length*(layout.tabHeight+4),sidebarScroll,Theme.accentColor());
         int fy=layout.footerY;
         c.fill(sx+8,fy-4,sx+sw-8,fy-3,Theme.BORDER);
         String footer="✦ Minecraft 1.21.0 • Fabric";
@@ -185,7 +186,7 @@ public final class BlackCloverScreen extends Screen {
         if(textRenderer.getWidth(footer)>max)footer="1.21.0 • Fabric";
         if(textRenderer.getWidth(footer)>max)footer=textRenderer.trimToWidth(footer,max);
         c.drawText(textRenderer,footer,sx+8,fy+2,Theme.TEXT_DIM,false);
-        if(ModConfig.showBounds)RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFFFFAA33,0x00000000);
+        if(ModConfig.showBounds){RoundedRect.border(c,vx,vy,vw,vh,2,1,0xFFFFAA33,0x00000000);c.drawText(textRenderer,"content="+listContentHeight+" viewport="+vh+" max="+Math.max(0,listContentHeight-vh)+" offset="+scrollOffset,vx,vy+2,0xFFFFAA33,false);}
     }
     private void renderTopbar(DrawContext c,int mx,int my){
         int left=layout.centerX,right=layout.compact?layout.x+layout.width-GAP:layout.settingsX+layout.settingsWidth;
@@ -426,11 +427,13 @@ public final class BlackCloverScreen extends Screen {
             if(inside(mx,my,profileX,top+5,118,26)){profileDropdown=true;return true;}
             if(inside(mx,my,themeMenuX,top+5,Math.max(30,right-30-themeMenuX-8),26)){themeDropdown=true;return true;}
             int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
-            if(listContentHeight>vh&&inside(mx,my,vx+vw-5,vy,vw>0?8:1,vh)){
-                int thumb=Math.max(18,vh*vh/listContentHeight),track=Math.max(1,vh-thumb);
-                int target=clamp((int)my-vy-thumb/2,0,track);
-                scrollOffset=(int)Math.round((double)target/track*Math.max(0,listContentHeight-vh));
-                draggingListScrollbar=true;listDragStartY=(int)my;listDragStartOffset=scrollOffset;return true;
+            if(listContentHeight>vh&&inside(mx,my,vx+vw-5,vy,8,vh)){
+                int thumb=Math.max(18,vh*vh/listContentHeight),track=Math.max(1,vh-thumb),max=Math.max(0,listContentHeight-vh);
+                int thumbTop=vy+(vh-thumb)*scrollOffset/max;
+                if(my<thumbTop)scrollOffset=Math.max(0,scrollOffset-layout.centerViewportHeight);
+                else if(my>thumbTop+thumb)scrollOffset=Math.min(max,scrollOffset+layout.centerViewportHeight);
+                else {int target=clamp((int)my-vy-thumb/2,0,track);scrollOffset=(int)Math.round((double)target/track*max);draggingListScrollbar=true;listDragStartY=(int)my;listDragStartOffset=scrollOffset;}
+                return true;
             }
             if(inside(mx,my,vx,vy,vw,vh)){
                 int idx=(int)((my-vy-10+scrollOffset)/ROW_STEP);
