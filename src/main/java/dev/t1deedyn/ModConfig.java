@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 public final class ModConfig {
     public static final String BUILD_VERSION = "0.3.0";
-    private static final int CONFIG_VERSION = 7;
+    private static final int CONFIG_VERSION = 8;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -29,6 +29,10 @@ public final class ModConfig {
     public static String accentHex = "#2BE36B";
     public static double accentBrightness = 1.0;
     public static boolean skyVisual = true;
+    public static boolean customSkyEnabled = false;
+    public static int skyMode = 0;
+    public static int skyQuality = 1;
+    public static double skyIntensity = 0.85;
     public static boolean rgbLighting = true;
     public static boolean showFps = true;
     public static boolean showPing = true;
@@ -102,6 +106,10 @@ public final class ModConfig {
             showBounds = bool(j, "showBounds", false);
             accentBrightness = clamp(number(j, "accentBrightness", 1.0), 0.1, 1.0);
             skyVisual = bool(j, "skyVisual", skyVisual);
+            customSkyEnabled = bool(j, "customSkyEnabled", false);
+            skyMode = clampInt(integer(j, "skyMode", 0), 0, 6);
+            skyQuality = clampInt(integer(j, "skyQuality", 1), 0, 2);
+            skyIntensity = clamp(number(j, "skyIntensity", 0.85), 0.0, 1.0);
             rgbLighting = bool(j, "rgbLighting", rgbLighting);
             showFps = bool(j, "showFps", true);
             showPing = bool(j, "showPing", true);
@@ -178,6 +186,10 @@ public final class ModConfig {
         j.addProperty("accentHex", accentHex);
         j.addProperty("accentBrightness", accentBrightness);
         j.addProperty("skyVisual", skyVisual);
+        j.addProperty("customSkyEnabled", customSkyEnabled);
+        j.addProperty("skyMode", skyMode);
+        j.addProperty("skyQuality", skyQuality);
+        j.addProperty("skyIntensity", skyIntensity);
         j.addProperty("rgbLighting", rgbLighting);
         j.addProperty("showFps", showFps);
         j.addProperty("showPing", showPing);
