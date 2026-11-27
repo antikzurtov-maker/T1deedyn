@@ -39,6 +39,7 @@ public final class BlackCloverScreen extends Screen {
     private final double previousScale;
     private boolean scaleRestored;
     private static boolean widthWarningLogged;
+    private boolean shapeTest;
 
     public BlackCloverScreen(){
         super(Text.literal("Чёрный Клевер"));
@@ -94,7 +95,7 @@ public final class BlackCloverScreen extends Screen {
         scrollOffset=clamp(scrollOffset,0,max);
         if(selectedFeature>=visibleFeatures.size())selectedFeature=-1;
     }
-    private void calculateRightContent(){rightContentHeight=selectedFeature>=0?196:390;}
+    private void calculateRightContent(){rightContentHeight=selectedFeature>=0?420:420;}
     private int shortText(String value,int maxWidth){
         return textRenderer.getWidth(value)<=maxWidth?textRenderer.getWidth(value):maxWidth;
     }
@@ -148,6 +149,7 @@ public final class BlackCloverScreen extends Screen {
             renderTopbar(c,mouseX,mouseY);
             renderFeatureList(c,mouseX,mouseY);
             if(!layout.compact)renderSettings(c,mouseX,mouseY);
+            if(shapeTest)renderShapeTest(c);
             if(profileModal)renderProfileModal(c);
             if(themeDropdown)renderThemeDropdown(c);
             if(profileDropdown)renderProfileDropdown(c);
@@ -302,6 +304,8 @@ public final class BlackCloverScreen extends Screen {
                 drawCentered(c,scale+"  ⌄",vx+vw/2,cy+336,Theme.TEXT);
                 RoundedRect.fill(c,vx,cy+357,vw,24,6,Theme.CARD_HOVER);
                 drawCentered(c,ModConfig.showBounds?"Границы: ВКЛ":"Показывать границы",vx+vw/2,cy+365,Theme.TEXT);
+                RoundedRect.fill(c,vx,cy+389,vw,24,6,Theme.CARD_HOVER);
+                drawCentered(c,"Тест форм",vx+vw/2,cy+397,Theme.TEXT);
             }else{
                 CloverFeature feature=visibleFeatures.get(selectedFeature);
                 c.drawText(textRenderer,feature.name,vx,cy+2,Theme.TEXT,false);
@@ -435,6 +439,24 @@ public final class BlackCloverScreen extends Screen {
         if(id==0)ModConfig.menuOpacity=0.72+ratio*0.28;else if(id==1)ModConfig.backgroundDim=ratio*0.75;else if(id==2)ModConfig.fullbrightBrightness=(int)Math.round(ratio*100);else if(id==3)ModConfig.zoomDefault=1.5+ratio*8.5;else if(id==4)ModConfig.zoomSpeed=1+ratio*19;
         ModConfig.save();
     }
+    private void renderShapeTest(DrawContext c){
+        int x=layout.x+20,y=layout.y+20,w=Math.min(420,layout.width-40),h=Math.min(240,layout.height-40);
+        RoundedRect.fill(c,x,y,w,h,12,0xF20A100D);
+        RoundedRect.border(c,x,y,w,h,12,1,Theme.brightAccentColor(),Theme.panelColor());
+        drawText(c,"ТЕСТ ФОРМ • 1:1 GUI",x+12,y+10,Theme.TEXT,w-24);
+        for(int i=0;i<4;i++){
+            int ww=36+i*13,hh=18+(i%2);
+            RoundedRect.fill(c,x+12+i*78,y+38,ww,hh,Math.min(9,hh/2),Theme.accentColor());
+            RoundedRect.border(c,x+12+i*78,y+68,ww,hh,Math.min(9,hh/2),1,Theme.brightAccentColor(),Theme.cardColor());
+        }
+        for(int i=0;i<4;i++)RoundedRect.fill(c,x+18+i*42,y+108,18,18,9,Theme.accent2Color());
+        Toggle.draw(c,80,x+210,y+108,false,Theme.accentColor(),Theme.accent2Color(),false,false,true);
+        Toggle.draw(c,81,x+260,y+108,true,Theme.accentColor(),Theme.accent2Color(),false,false,true);
+        drawIcon(c,0,x+14,y+150,Theme.TEXT);
+        drawIcon(c,0,x+54,y+150,Theme.TEXT);
+        drawIcon(c,0,x+94,y+150,Theme.TEXT);
+        drawCentered(c,"Нажми «Тест форм» ещё раз, чтобы закрыть",x+w/2,y+205,Theme.TEXT_DIM);
+    }
     private void drawBounds(DrawContext c){
         RoundedRect.border(c,layout.sidebarX,layout.y+GAP,layout.sidebarWidth,layout.height-GAP*2,2,1,0xFFFFAA33,0);
         RoundedRect.border(c,layout.centerX,layout.contentY,layout.compact?layout.width-(layout.centerX-layout.x)-GAP:layout.centerWidth,layout.contentHeight,2,1,0xFF55AAFF,0);
@@ -494,6 +516,7 @@ public final class BlackCloverScreen extends Screen {
                         applyMenuScale(MinecraftClient.getInstance());return true;
                     }
                     if(inside(mx,my,rx,ry+357,rw,24)){ModConfig.showBounds=!ModConfig.showBounds;ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+389,rw,24)){shapeTest=!shapeTest;return true;}
                 }else if(inside(mx,my,rx+rw-42,ry+76,48,28)){CloverFeature f=visibleFeatures.get(selectedFeature);f.setEnabled(!f.enabled());return true;}
                 else if(selectedFeature>=0){
                     CloverFeature f=visibleFeatures.get(selectedFeature);
