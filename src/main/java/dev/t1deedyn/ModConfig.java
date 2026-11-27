@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 public final class ModConfig {
     public static final String BUILD_VERSION = "0.4.0";
-    private static final int CONFIG_VERSION = 10;
+    private static final int CONFIG_VERSION = 11;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -140,8 +140,6 @@ public final class ModConfig {
             zoomSmoothCamera = bool(j, "zoomSmoothCamera", false);
             menuSounds = bool(j, "menuSounds", true);
             int loadedVersion = integer(j, "configVersion", 0);
-            // Earlier CustomSky defaulted to Vanilla, making the enabled toggle appear broken.
-            if (loadedVersion < 10 && skyMode == 0) skyMode = 1;
             autoBerryEnabled = bool(j, "autoBerryEnabled", false);
             autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", -1), -1, 348);
             autoBerryAccordion = bool(j, "autoBerryAccordion", false);
