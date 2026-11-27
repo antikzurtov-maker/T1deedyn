@@ -56,11 +56,11 @@ public final class CloverMark {
         for(int i=1;i<=16;i++){
             double t=i/16.0,mt=1.0-t;
             double bx=mt*mt*mt*0.0+3*mt*mt*t*2.0+3*mt*t*t*15.0+t*t*t*0.45*radius;
-            double by=mt*mt*mt*0.0+3*mt*mt*t*12.0+3*mt*t*t*34.0+t*t*t*0.45*radius;
+            double by=mt*mt*mt*0.0+3*mt*mt*t*-12.0+3*mt*t*t*-34.0-t*t*t*0.45*radius;
             double dx=x-bx,dy=y-by,d=dx*dx+dy*dy;
             if(d<best){best=d;px0=bx;py0=by;}
         }
-        if(y>=-1&&best<Math.pow(0.03*radius,2))result=Math.max(result,105);
+        if(y<=1&&best<Math.pow(0.03*radius,2))result=Math.max(result,105);
         return result;
     }
     private static int tint(int color,int shade){
