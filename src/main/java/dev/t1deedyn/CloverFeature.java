@@ -35,6 +35,8 @@ public final class CloverFeature {
             case 14 -> ModConfig.autoBerryHighlight;
             case 15 -> ModConfig.berryHighlightDebug;
             case 16 -> ModConfig.autoPerformance;
+            case 17 -> Modules.FULLBRIGHT.isEnabled();
+            case 18 -> Modules.ZOOM.isEnabled();
             default -> false;
         };
     }
@@ -58,6 +60,8 @@ public final class CloverFeature {
             case 14 -> ModConfig.autoBerryHighlight = value;
             case 15 -> ModConfig.berryHighlightDebug = value;
             case 16 -> ModConfig.autoPerformance = value;
+            case 17 -> { Modules.FULLBRIGHT.setEnabled(value); ModConfig.fullbrightEnabled=value; }
+            case 18 -> { Modules.ZOOM.setEnabled(value); ModConfig.zoomEnabled=value; }
             default -> { return; }
         }
         ModConfig.save();
@@ -65,6 +69,8 @@ public final class CloverFeature {
 
     public static final List<CloverFeature> ALL = List.of(
         new CloverFeature(0, "Частицы", "Отображение частиц окружения", 0),
+        new CloverFeature(0, "Полный свет", "Клиентское осветление карты освещения", 17),
+        new CloverFeature(0, "Зум", "Плавное приближение камеры клавишей C", 18),
         new CloverFeature(0, "Низкий огонь", "Уменьшенная высота огня от первого лица", 1),
         new CloverFeature(0, "Плавная камера", "Дополнительная плавность движения камеры", 2),
         new CloverFeature(0, "Визуальное небо", "Дополнительное оформление неба", 3),
@@ -82,6 +88,8 @@ public final class CloverFeature {
         new CloverFeature(5, "Отладка подсветки", "Показывать диагностические метки подсветки", 15),
         new CloverFeature(6, "Автопроизводительность", "Ограничивать нагрузку визуальных эффектов", 16)
     );
+
+    public int id() { return key; }
 
     private CloverFeature() { throw new AssertionError(); }
 }
