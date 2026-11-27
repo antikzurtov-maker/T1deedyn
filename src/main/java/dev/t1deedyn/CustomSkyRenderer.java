@@ -79,7 +79,7 @@ public final class CustomSkyRenderer {
     private static boolean active(ClientWorld world) {
         return ModConfig.customSkyEnabled
                 && world != null
-                && world.getRegistryKey() == World.OVERWORLD;
+                && World.OVERWORLD.equals(world.getRegistryKey());
     }
 
     private static float dayPhase(ClientWorld world) {
