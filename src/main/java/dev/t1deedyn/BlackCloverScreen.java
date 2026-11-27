@@ -156,7 +156,7 @@ public final class BlackCloverScreen extends Screen {
     }
     private void renderSidebar(DrawContext c,int mx,int my){
         int sx=layout.sidebarX,sy=layout.y+GAP,sw=layout.sidebarWidth;
-        RoundedRect.border(c,sx,sy,sw,layout.height-GAP*2,10,1,Theme.BORDER,surface(Theme.PANEL));
+        RoundedRect.border(c,sx,sy,sw,layout.height-GAP*2,10,1,Theme.BORDER,surface(Theme.panelColor()));
         int logo=layout.logoHeight;
         int mark=Math.min(56,Math.max(40,logo-42));
         CloverMark.draw(c,sx+(sw-mark)/2,sy+5,mark,Theme.accentColor());
@@ -171,7 +171,7 @@ public final class BlackCloverScreen extends Screen {
                 int ty=vy+i*(rowH+4)-sidebarScroll;
                 if(ty+rowH<vy||ty>vy+vh)continue;
                 boolean active=i==selectedTab,hover=inside(mx,my,vx,ty,vw,rowH);
-                if(active)RoundedRect.border(c,vx,ty,vw,rowH,7,1,Theme.brightAccentColor(),0x702BE36B);
+                if(active){int a=Theme.accentColor(),b=Theme.accent2Color();RoundedRect.fill(c,vx,ty,vw,rowH,7,(a&0x00FFFFFF)|0x8C000000);c.fill(vx+1,ty+rowH/2,vx+vw-1,ty+rowH-1,(b&0x00FFFFFF)|0x40000000);RoundedRect.border(c,vx,ty,vw,rowH,7,1,Theme.brightAccentColor(),0x00000000);}
                 else if(hover)RoundedRect.fill(c,vx,ty,vw,rowH,7,surface(Theme.CARD_HOVER));
                 int iconY=ty+(rowH-18)/2;
                 drawIcon(c,i,vx+5,iconY,active?Theme.TEXT:Theme.TEXT_DIM);
@@ -269,7 +269,7 @@ public final class BlackCloverScreen extends Screen {
         CloverMark.draw(c,sx+9,sy+9,24,Theme.accentColor());
         drawText(c,general?"ОБЩИЕ НАСТРОЙКИ МЕНЮ":"НАСТРОЙКИ ФУНКЦИИ",sx+39,sy+17,Theme.accentColor(),sw-48);
         int vx=layout.settingsViewportX,vy=layout.settingsViewportY,vw=layout.settingsViewportWidth,vh=layout.settingsViewportHeight;
-        int total=general?360:196;
+        int total=general?390:196;
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
             int cy=vy-settingsScroll;
@@ -284,16 +284,18 @@ public final class BlackCloverScreen extends Screen {
                 drawSettingLabel(c,"Затемнение фона",vx,cy+145,vw);
                 drawSlider(c,vx+12,cy+163,vw-24,ModConfig.backgroundDim,0.0,0.75,1);
                 drawSettingLabel(c,"Цветовая тема",vx,cy+199,vw);
-                RoundedRect.border(c,vx,cy+217,vw,28,6,1,Theme.BORDER,Theme.CARD);
+                RoundedRect.border(c,vx,cy+217,vw,28,6,1,Theme.borderColor(),Theme.cardColor());
                 drawText(c,Theme.displayName(Theme.selected()),vx+8,cy+226,Theme.accentColor(),vw-16);
                 RoundedRect.fill(c,vx,cy+253,vw,24,6,Theme.CARD_HOVER);
-                drawCentered(c,"Сбросить цвет",vx+vw/2,cy+261,Theme.TEXT);
-                drawSettingLabel(c,"Масштаб меню",vx,cy+289,vw);
-                RoundedRect.border(c,vx,cy+307,vw,25,6,1,Theme.BORDER,Theme.CARD);
+                drawCentered(c,ModConfig.tintMenuBackground?"Тонировать фон: ВКЛ":"Тонировать фон: ВЫКЛ",vx+vw/2,cy+261,Theme.TEXT);
+                RoundedRect.fill(c,vx,cy+281,vw,22,6,Theme.CARD_HOVER);
+                drawCentered(c,"Сбросить тему",vx+vw/2,cy+287,Theme.TEXT);
+                drawSettingLabel(c,"Масштаб меню",vx,cy+310,vw);
+                RoundedRect.border(c,vx,cy+328,vw,25,6,1,Theme.BORDER,Theme.CARD);
                 String scale=ModConfig.uiScale==0?"Авто":Integer.toString(ModConfig.uiScale);
-                drawCentered(c,scale+"  ⌄",vx+vw/2,cy+315,Theme.TEXT);
-                RoundedRect.fill(c,vx,cy+339,vw,24,6,Theme.CARD_HOVER);
-                drawCentered(c,ModConfig.showBounds?"Границы: ВКЛ":"Показывать границы",vx+vw/2,cy+347,Theme.TEXT);
+                drawCentered(c,scale+"  ⌄",vx+vw/2,cy+336,Theme.TEXT);
+                RoundedRect.fill(c,vx,cy+357,vw,24,6,Theme.CARD_HOVER);
+                drawCentered(c,ModConfig.showBounds?"Границы: ВКЛ":"Показывать границы",vx+vw/2,cy+365,Theme.TEXT);
             }else{
                 CloverFeature feature=visibleFeatures.get(selectedFeature);
                 c.drawText(textRenderer,feature.name,vx,cy+2,Theme.TEXT,false);
@@ -440,12 +442,13 @@ public final class BlackCloverScreen extends Screen {
                     if(inside(mx,my,rx+12,ry+109,rw-24,16)){draggingSlider=0;setSliderValue(0,mx);return true;}
                     if(inside(mx,my,rx+12,ry+163,rw-24,16)){draggingSlider=1;setSliderValue(1,mx);return true;}
                     if(inside(mx,my,rx,ry+217,rw,28)){cycleTheme();return true;}
-                    if(inside(mx,my,rx,ry+253,rw,24)){Theme.setCustomAccent(Theme.ACCENT);Theme.select(Theme.Preset.CLOVER);ModConfig.accentTheme=0;ModConfig.accentHex="#2BE36B";ModConfig.save();return true;}
-                    if(inside(mx,my,rx,ry+307,rw,25)){
+                    if(inside(mx,my,rx,ry+253,rw,24)){ModConfig.tintMenuBackground=!ModConfig.tintMenuBackground;Theme.setTintBackground(ModConfig.tintMenuBackground);ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+281,rw,22)){Theme.select(Theme.Preset.CLOVER);ModConfig.accentTheme=0;ModConfig.accentHex="#2BE36B";ModConfig.tintMenuBackground=true;Theme.setTintBackground(true);ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+328,rw,25)){
                         ModConfig.uiScale=(ModConfig.uiScale+1)%5;ModConfig.save();
                         applyMenuScale(MinecraftClient.getInstance());return true;
                     }
-                    if(inside(mx,my,rx,ry+339,rw,24)){ModConfig.showBounds=!ModConfig.showBounds;ModConfig.save();return true;}
+                    if(inside(mx,my,rx,ry+357,rw,24)){ModConfig.showBounds=!ModConfig.showBounds;ModConfig.save();return true;}
                 }else if(inside(mx,my,rx+rw-42,ry+76,40,20)){CloverFeature f=visibleFeatures.get(selectedFeature);f.setEnabled(!f.enabled());return true;}
             }
         }
