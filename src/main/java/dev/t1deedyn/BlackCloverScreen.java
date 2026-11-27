@@ -19,11 +19,16 @@ public final class BlackCloverScreen extends Screen {
         "Информация и элементы игрового HUD","Частицы и визуальные эффекты",
         "Профили, производительность и информация"
     };
-    private static final int ROW_HEIGHT=54, GAP=8;
+    private static final int ROW_HEIGHT=56, ROW_GAP=6, ROW_STEP=ROW_HEIGHT+ROW_GAP, GAP=8;
     private final List<CloverFeature> visibleFeatures=new ArrayList<>();
     private final Map<String,String> ellipsisCache=new HashMap<>();
     private UiLayout layout;
     private int selectedTab, selectedFeature=-1, scrollOffset, sidebarScroll, settingsScroll;
+    private final int[] tabScrollOffsets=new int[TABS.length];
+    private int listContentHeight;
+    private double pressStartX,pressStartY;
+    private boolean touchScrolling,draggingListScrollbar;
+    private int listDragStartY,listDragStartOffset;
     private boolean searchFocused, profileModal, themeDropdown, profileDropdown;
     private String search="", profileName="profile-1", selectedProfile="";
     private int draggingSlider=-1, animationTicks, hoverRow=-1;
@@ -82,7 +87,8 @@ public final class BlackCloverScreen extends Screen {
                     &&!feature.description.toLowerCase(java.util.Locale.ROOT).contains(q))continue;
             visibleFeatures.add(feature);
         }
-        int max=Math.max(0,visibleFeatures.size()*ROW_HEIGHT-layout.centerViewportHeight);
+        listContentHeight=20+visibleFeatures.size()*ROW_HEIGHT+Math.max(0,visibleFeatures.size()-1)*ROW_GAP;
+        int max=Math.max(0,listContentHeight-layout.centerViewportHeight);
         scrollOffset=clamp(scrollOffset,0,max);
         if(selectedFeature>=visibleFeatures.size())selectedFeature=-1;
     }
@@ -152,9 +158,11 @@ public final class BlackCloverScreen extends Screen {
         int sx=layout.sidebarX,sy=layout.y+GAP,sw=layout.sidebarWidth;
         RoundedRect.border(c,sx,sy,sw,layout.height-GAP*2,10,1,Theme.BORDER,surface(Theme.PANEL));
         int logo=layout.logoHeight;
-        int mark=Math.min(56,Math.max(24,logo-24));
+        int mark=Math.min(56,Math.max(40,logo-42));
         CloverMark.draw(c,sx+(sw-mark)/2,sy+5,mark,Theme.accentColor());
-        drawCentered(c,"ЧЁРНЫЙ",sx+sw/2,sy+logo-17,Theme.TEXT);
+        int logoTextY=sy+5+mark+6;
+        drawCentered(c,"ЧЁРНЫЙ",sx+sw/2,logoTextY,Theme.TEXT);
+        drawCentered(c,"КЛЕВЕР",sx+sw/2,logoTextY+11,Theme.TEXT);
         int vx=layout.sidebarViewportX,vy=layout.sidebarViewportY,vw=layout.sidebarViewportWidth,vh=layout.sidebarViewportHeight;
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
@@ -216,7 +224,7 @@ public final class BlackCloverScreen extends Screen {
         }
     }
     private void renderFeatureList(DrawContext c,int mx,int my){
-        int cx=layout.centerX,cy=layout.contentY,cw=layout.compact?layout.width-(cx-layout.x)-GAP:layout.centerWidth,ch=layout.contentHeight;
+        int cx=layout.centerX,cy=layout.contentY,cw=layout.centerWidth,ch=layout.contentHeight;
         RoundedRect.border(c,cx,cy,cw,ch,9,1,Theme.BORDER,surface(Theme.PANEL));
         CloverMark.draw(c,cx+10,cy+10,26,Theme.accentColor());
         c.drawText(textRenderer,search.isEmpty()?TABS[selectedTab].toUpperCase(java.util.Locale.ROOT):"РЕЗУЛЬТАТЫ ПОИСКА",cx+43,cy+17,Theme.accentColor(),false);
@@ -226,7 +234,7 @@ public final class BlackCloverScreen extends Screen {
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
             for(int i=0;i<visibleFeatures.size();i++){
-                int ry=vy+i*ROW_HEIGHT-scrollOffset;
+                int ry=vy+10+i*ROW_STEP-scrollOffset;
                 if(ry+ROW_HEIGHT<vy||ry>vy+vh)continue;
                 CloverFeature f=visibleFeatures.get(i);
                 boolean hovered=inside(mx,my,vx,ry,vw,ROW_HEIGHT-4);
@@ -234,13 +242,17 @@ public final class BlackCloverScreen extends Screen {
                 if(i==selectedFeature)RoundedRect.border(c,vx,ry,vw,ROW_HEIGHT-4,7,1,Theme.brightAccentColor(),Theme.CARD);
                 else RoundedRect.fill(c,vx,ry,vw,ROW_HEIGHT-4,7,hovered?Theme.CARD_HOVER:Theme.CARD);
                 c.fill(vx+7,ry+10,vx+9,ry+ROW_HEIGHT-14,i==selectedFeature?Theme.accentColor():Theme.BORDER);
-                int toggleX=vx+vw-48, textX=vx+17, textW=Math.max(12,toggleX-textX-12);
-                drawText(c,f.name,textX,ry+9,Theme.TEXT,textW);
-                if(!layout.compact)drawText(c,f.description,textX,ry+27,Theme.TEXT_DIM,textW);
-                drawToggle(c,toggleX,ry+17,f.enabled(),Theme.accentColor());
+                int iconX=vx+8, textX=iconX+36+10, toggleX=vx+vw-50;
+                int textW=Math.max(1,vw-10-36-10-8-40-10-10);
+                c.fill(iconX+8,ry+18,iconX+24,ry+34,i==selectedFeature?Theme.accentColor():Theme.BORDER);
+                drawText(c,f.name,textX,ry+10,Theme.TEXT,textW);
+                drawText(c,f.description,textX,ry+29,Theme.TEXT_DIM,textW);
+                drawToggle(c,toggleX,ry+18,f.enabled(),Theme.accentColor());
             }
         }finally{c.disableScissor();}
-        drawScrollbar(c,vx+vw-2,vy,vh,visibleFeatures.size()*ROW_HEIGHT,scrollOffset,Theme.accentColor());
+        drawScrollbar(c,vx+vw-3,vy,vh,listContentHeight,scrollOffset,Theme.accentColor());
+        if(scrollOffset>0)c.fill(vx,vy,vx+vw,vy+2,0x182BE36B);
+        if(scrollOffset<Math.max(0,listContentHeight-vh))c.fill(vx,vy+vh-2,vx+vw,vy+vh,0x182BE36B);
         if(hoverRow>=0&&!layout.compact){
             CloverFeature f=visibleFeatures.get(hoverRow);
             if(textRenderer.getWidth(f.description)>Math.max(12,vw-90)){
@@ -395,7 +407,7 @@ public final class BlackCloverScreen extends Screen {
         if(themeDropdown){if(button==0){int x=layout.compact?layout.centerX+layout.width/2:layout.settingsX-120,y=layout.y+48;for(int i=0;i<Theme.Preset.values().length;i++)if(inside(mx,my,x,y+4+i*18,112,18)){Theme.select(Theme.Preset.values()[i]);ModConfig.accentTheme=i;ModConfig.save();themeDropdown=false;return true;}}themeDropdown=false;return true;}
         if(profileDropdown){if(button==0){int x=layout.centerX+110,y=layout.y+48;if(inside(mx,my,x,y+22,130,20)){profileModal=true;profileDropdown=false;return true;}if(inside(mx,my,x,y+40,130,20)){profileModal=true;profileName=selectedProfile;profileDropdown=false;return true;}if(inside(mx,my,x,y+58,130,20)){if(!selectedProfile.isEmpty())CloverProfiles.delete(selectedProfile);profileDropdown=false;return true;}}profileDropdown=false;return true;}
         if(button==0){
-            for(int i=0;i<TABS.length;i++){int ty=layout.sidebarViewportY+i*(layout.tabHeight+4)-sidebarScroll;if(inside(mx,my,layout.sidebarViewportX,ty,layout.sidebarViewportWidth,layout.tabHeight)){selectedTab=i;selectedFeature=-1;scrollOffset=0;refreshFeatures();calculateRightContent();return true;}}
+            for(int i=0;i<TABS.length;i++){int ty=layout.sidebarViewportY+i*(layout.tabHeight+4)-sidebarScroll;if(inside(mx,my,layout.sidebarViewportX,ty,layout.sidebarViewportWidth,layout.tabHeight)){tabScrollOffsets[selectedTab]=scrollOffset;selectedTab=i;selectedFeature=-1;scrollOffset=tabScrollOffsets[i];refreshFeatures();calculateRightContent();return true;}}
             int right=layout.compact?layout.x+layout.width-GAP:layout.settingsX+layout.settingsWidth,top=layout.y+GAP;
             if(inside(mx,my,right-30,top+3,26,26)){close();return true;}
             if(inside(mx,my,right-60,top+3,26,26)){close();return true;}
@@ -406,8 +418,8 @@ public final class BlackCloverScreen extends Screen {
             if(inside(mx,my,themeMenuX,top+5,Math.max(30,right-30-themeMenuX-8),26)){themeDropdown=true;return true;}
             int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;
             if(inside(mx,my,vx,vy,vw,vh)){
-                int idx=(int)((my-vy+scrollOffset)/ROW_HEIGHT);
-                if(idx>=0&&idx<visibleFeatures.size()){selectedFeature=idx;calculateRightContent();CloverFeature f=visibleFeatures.get(idx);int toggleX=vx+vw-48,ry=vy+idx*ROW_HEIGHT-scrollOffset;if(inside(mx,my,toggleX,ry+17,40,20))f.setEnabled(!f.enabled());return true;}
+                int idx=(int)((my-vy-10+scrollOffset)/ROW_STEP);
+                if(idx>=0&&idx<visibleFeatures.size()){selectedFeature=idx;calculateRightContent();CloverFeature f=visibleFeatures.get(idx);int toggleX=vx+vw-50,ry=vy+10+idx*ROW_STEP-scrollOffset;if(inside(mx,my,toggleX,ry+18,40,20))f.setEnabled(!f.enabled());return true;}
             }
             if(!layout.compact){
                 int rx=layout.settingsViewportX,ry=layout.settingsViewportY-settingsScroll,rw=layout.settingsViewportWidth;
@@ -429,8 +441,8 @@ public final class BlackCloverScreen extends Screen {
     }
     @Override public boolean mouseScrolled(double mx,double my,double horizontal,double vertical){
         if(layout==null)layout=new UiLayout(width,height);
-        if(inside(mx,my,layout.sidebarViewportX,layout.sidebarViewportY,layout.sidebarViewportWidth,layout.sidebarViewportHeight)){int max=Math.max(0,TABS.length*(layout.tabHeight+4)-layout.sidebarViewportHeight);sidebarScroll=clamp(sidebarScroll-(int)(vertical*24),0,max);return true;}
-        if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,visibleFeatures.size()*ROW_HEIGHT-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)(vertical*ROW_HEIGHT*2),0,max);return true;}
+        if(inside(mx,my,layout.sidebarViewportX,layout.sidebarViewportY,layout.sidebarViewportWidth,layout.sidebarViewportHeight)){int max=Math.max(0,TABS.length*(layout.tabHeight+4)-layout.sidebarViewportHeight);sidebarScroll=clamp(sidebarScroll-(int)Math.round(vertical*28),0,max);return true;}
+        if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)Math.round(vertical*28),0,max);return true;}
         if(!layout.compact&&inside(mx,my,layout.settingsViewportX,layout.settingsViewportY,layout.settingsViewportWidth,layout.settingsViewportHeight)){settingsScroll=clamp(settingsScroll-(int)(vertical*24),0,Math.max(0,rightContentHeight-layout.settingsViewportHeight));return true;}
         return super.mouseScrolled(mx,my,horizontal,vertical);
     }
@@ -439,7 +451,9 @@ public final class BlackCloverScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int mods){
         if(profileModal){if(key==GLFW.GLFW_KEY_ESCAPE){profileModal=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!profileName.isEmpty()){profileName=profileName.substring(0,profileName.length()-1);return true;}if(key==GLFW.GLFW_KEY_ENTER){if(CloverProfiles.save(profileName))selectedProfile=profileName;return true;}}
         if(searchFocused){if(key==GLFW.GLFW_KEY_ESCAPE){searchFocused=false;return true;}if(key==GLFW.GLFW_KEY_BACKSPACE&&!search.isEmpty()){search=search.substring(0,search.length()-1);refreshFeatures();return true;}if(key==GLFW.GLFW_KEY_ENTER){searchFocused=false;return true;}}
-        if(key==GLFW.GLFW_KEY_ESCAPE){close();return true;}return super.keyPressed(key,scan,mods);
+        if(key==GLFW.GLFW_KEY_ESCAPE){close();return true;}
+        if(layout!=null){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);if(key==GLFW.GLFW_KEY_UP){scrollOffset=clamp(scrollOffset-28,0,max);return true;}if(key==GLFW.GLFW_KEY_DOWN){scrollOffset=clamp(scrollOffset+28,0,max);return true;}if(key==GLFW.GLFW_KEY_PAGE_UP){scrollOffset=clamp(scrollOffset-layout.centerViewportHeight,0,max);return true;}if(key==GLFW.GLFW_KEY_PAGE_DOWN){scrollOffset=clamp(scrollOffset+layout.centerViewportHeight,0,max);return true;}if(key==GLFW.GLFW_KEY_HOME){scrollOffset=0;return true;}if(key==GLFW.GLFW_KEY_END){scrollOffset=max;return true;}}
+        return super.keyPressed(key,scan,mods);
     }
     @Override public boolean charTyped(char chr,int modifiers){if(profileModal&&!Character.isISOControl(chr)&&profileName.length()<32){profileName+=chr;return true;}if(searchFocused&&!Character.isISOControl(chr)&&search.length()<48){search+=chr;refreshFeatures();return true;}return super.charTyped(chr,modifiers);}
 }
