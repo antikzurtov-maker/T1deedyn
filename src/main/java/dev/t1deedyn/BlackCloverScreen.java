@@ -494,7 +494,23 @@ public final class BlackCloverScreen extends Screen {
                         applyMenuScale(MinecraftClient.getInstance());return true;
                     }
                     if(inside(mx,my,rx,ry+357,rw,24)){ModConfig.showBounds=!ModConfig.showBounds;ModConfig.save();return true;}
-                }else if(inside(mx,my,rx+rw-42,ry+76,40,20)){CloverFeature f=visibleFeatures.get(selectedFeature);f.setEnabled(!f.enabled());return true;}
+                }else if(inside(mx,my,rx+rw-42,ry+76,48,28)){CloverFeature f=visibleFeatures.get(selectedFeature);f.setEnabled(!f.enabled());return true;}
+                else if(selectedFeature>=0){
+                    CloverFeature f=visibleFeatures.get(selectedFeature);
+                    if(f.id()==17){
+                        if(inside(mx,my,rx,ry+166,rw,22)){ModConfig.fullbrightMode=(ModConfig.fullbrightMode+1)%2;ModConfig.save();return true;}
+                        if(inside(mx,my,rx+8,ry+204,rw-16,16)){draggingSlider=2;setSliderValue(2,mx);return true;}
+                        if(inside(mx,my,rx+rw-46,ry+246,48,28)){ModConfig.fullbrightSmooth=!ModConfig.fullbrightSmooth;ModConfig.save();return true;}
+                        if(inside(mx,my,rx+rw-46,ry+291,48,28)){ModConfig.fullbrightSkipDimensions=!ModConfig.fullbrightSkipDimensions;ModConfig.save();return true;}
+                    }else if(f.id()==18){
+                        if(inside(mx,my,rx,ry+166,rw,22)){ModConfig.zoomToggleMode=!ModConfig.zoomToggleMode;Modules.ZOOM.reset();ModConfig.save();return true;}
+                        if(inside(mx,my,rx+8,ry+204,rw-16,16)){draggingSlider=3;setSliderValue(3,mx);return true;}
+                        if(inside(mx,my,rx+8,ry+242,rw-16,16)){draggingSlider=4;setSliderValue(4,mx);return true;}
+                        if(inside(mx,my,rx+rw-46,ry+284,48,28)){ModConfig.zoomWheel=!ModConfig.zoomWheel;ModConfig.save();return true;}
+                        if(inside(mx,my,rx+rw-46,ry+328,48,28)){ModConfig.zoomSensitivity=!ModConfig.zoomSensitivity;ModConfig.save();return true;}
+                        if(inside(mx,my,rx+rw-46,ry+372,48,28)){ModConfig.zoomSmoothCamera=!ModConfig.zoomSmoothCamera;ModConfig.save();return true;}
+                    }
+                }
             }
         }
         if(button==1){int vx=layout.centerViewportX,vy=layout.centerViewportY,vw=layout.centerViewportWidth,vh=layout.centerViewportHeight;if(inside(mx,my,vx,vy,vw,vh)){int idx=(int)((my-vy+scrollOffset)/ROW_HEIGHT);if(idx>=0&&idx<visibleFeatures.size()){CloverFeature f=visibleFeatures.get(idx);f.setEnabled(!f.enabled());return true;}}}
