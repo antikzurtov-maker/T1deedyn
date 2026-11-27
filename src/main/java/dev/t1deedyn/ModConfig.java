@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 public final class ModConfig {
     public static final String BUILD_VERSION = "0.3.0";
-    private static final int CONFIG_VERSION = 6;
+    private static final int CONFIG_VERSION = 7;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -36,6 +36,19 @@ public final class ModConfig {
     public static boolean autoPerformance = true;
     public static int effectFps = 30;
     public static int particleLimit = 24;
+    public static boolean fullbrightEnabled = false;
+    public static int fullbrightMode = 0;
+    public static int fullbrightBrightness = 100;
+    public static boolean fullbrightSmooth = true;
+    public static boolean fullbrightSkipDimensions = false;
+    public static boolean zoomEnabled = false;
+    public static boolean zoomToggleMode = true;
+    public static double zoomDefault = 4.0;
+    public static double zoomSpeed = 10.0;
+    public static boolean zoomWheel = true;
+    public static boolean zoomSensitivity = true;
+    public static boolean zoomSmoothCamera = false;
+    public static boolean menuSounds = true;
 
     public static boolean autoBerryEnabled = false;
     public static int autoBerryToggleKey = -1;
@@ -96,6 +109,19 @@ public final class ModConfig {
             autoPerformance = bool(j, "autoPerformance", true);
             effectFps = clampInt(integer(j, "effectFps", 30), 5, 60);
             particleLimit = clampInt(integer(j, "particleLimit", 24), 0, 128);
+            fullbrightEnabled = bool(j, "fullbrightEnabled", false);
+            fullbrightMode = clampInt(integer(j, "fullbrightMode", 0), 0, 1);
+            fullbrightBrightness = clampInt(integer(j, "fullbrightBrightness", 100), 0, 100);
+            fullbrightSmooth = bool(j, "fullbrightSmooth", true);
+            fullbrightSkipDimensions = bool(j, "fullbrightSkipDimensions", false);
+            zoomEnabled = bool(j, "zoomEnabled", false);
+            zoomToggleMode = bool(j, "zoomToggleMode", true);
+            zoomDefault = clamp(number(j, "zoomDefault", 4.0), 1.5, 10.0);
+            zoomSpeed = clamp(number(j, "zoomSpeed", 10.0), 1.0, 20.0);
+            zoomWheel = bool(j, "zoomWheel", true);
+            zoomSensitivity = bool(j, "zoomSensitivity", true);
+            zoomSmoothCamera = bool(j, "zoomSmoothCamera", false);
+            menuSounds = bool(j, "menuSounds", true);
             int loadedVersion = integer(j, "configVersion", 0);
             autoBerryEnabled = bool(j, "autoBerryEnabled", false);
             autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", -1), -1, 348);
@@ -159,6 +185,19 @@ public final class ModConfig {
         j.addProperty("autoPerformance", autoPerformance);
         j.addProperty("effectFps", effectFps);
         j.addProperty("particleLimit", particleLimit);
+        j.addProperty("fullbrightEnabled", fullbrightEnabled);
+        j.addProperty("fullbrightMode", fullbrightMode);
+        j.addProperty("fullbrightBrightness", fullbrightBrightness);
+        j.addProperty("fullbrightSmooth", fullbrightSmooth);
+        j.addProperty("fullbrightSkipDimensions", fullbrightSkipDimensions);
+        j.addProperty("zoomEnabled", zoomEnabled);
+        j.addProperty("zoomToggleMode", zoomToggleMode);
+        j.addProperty("zoomDefault", zoomDefault);
+        j.addProperty("zoomSpeed", zoomSpeed);
+        j.addProperty("zoomWheel", zoomWheel);
+        j.addProperty("zoomSensitivity", zoomSensitivity);
+        j.addProperty("zoomSmoothCamera", zoomSmoothCamera);
+        j.addProperty("menuSounds", menuSounds);
         j.addProperty("autoBerryEnabled", autoBerryEnabled);
         j.addProperty("autoBerryToggleKey", autoBerryToggleKey);
         j.addProperty("autoBerryAccordion", autoBerryAccordion);
