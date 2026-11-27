@@ -37,6 +37,7 @@ public final class CloverFeature {
             case 16 -> ModConfig.autoPerformance;
             case 17 -> Modules.FULLBRIGHT.isEnabled();
             case 18 -> Modules.ZOOM.isEnabled();
+            case 19 -> Modules.CUSTOM_SKY.isEnabled();
             default -> false;
         };
     }
@@ -62,6 +63,7 @@ public final class CloverFeature {
             case 16 -> ModConfig.autoPerformance = value;
             case 17 -> { Modules.FULLBRIGHT.setEnabled(value); ModConfig.fullbrightEnabled=value; }
             case 18 -> { Modules.ZOOM.setEnabled(value); ModConfig.zoomEnabled=value; }
+            case 19 -> { Modules.CUSTOM_SKY.setEnabled(value); ModConfig.customSkyEnabled=value; }
             default -> { return; }
         }
         ModConfig.save();
@@ -73,7 +75,8 @@ public final class CloverFeature {
         new CloverFeature(0, "Зум", "Плавное приближение камеры клавишей C", 18),
         new CloverFeature(0, "Низкий огонь", "Уменьшенная высота огня от первого лица", 1),
         new CloverFeature(0, "Плавная камера", "Дополнительная плавность движения камеры", 2),
-        new CloverFeature(0, "Визуальное небо", "Дополнительное оформление неба", 3),
+        new CloverFeature(0, "Визуальное небо", "Старая настройка визуального неба", 3),
+        new CloverFeature(0, "CustomSky", "Палитры неба, облаков и звёзд", 19),
         new CloverFeature(0, "RGB-подсветка", "Цветовая подсветка интерфейсных элементов", 4),
         new CloverFeature(1, "AutoBerry", "Автоматический сбор созревших ягод", 5),
         new CloverFeature(3, "Анимации меню", "Плавное появление элементов интерфейса", 6),
