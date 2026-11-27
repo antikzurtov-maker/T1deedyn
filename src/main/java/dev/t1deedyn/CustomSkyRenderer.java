@@ -22,6 +22,7 @@ public final class CustomSkyRenderer {
     private static final float[] DEEP_NIGHT = {0.045f, 0.055f, 0.16f};
     private static final float[] DYNAMIC = new float[3];
     private static final float[] CUSTOM = new float[3];
+    private static final float[] ADJUSTED = new float[3];
     private static final String[] MODE_NAMES = {
             "Vanilla", "Sunset", "Sunrise", "Night", "Starry",
             "Galaxy", "Purple", "BloodMoon", "Aurora", "Fantasy", "Custom"
@@ -39,8 +40,7 @@ public final class CustomSkyRenderer {
         if (mode == 0) return vanilla;
 
         float day = dayPhase(world);
-        float[] rgb = palette(mode, day);
-        adjustColor(rgb, (float) ModConfig.skyBrightness, (float) ModConfig.skySaturation);
+        float[] rgb = adjustColor(palette(mode, day), (float) ModConfig.skyBrightness, (float) ModConfig.skySaturation);
         float intensity = (float) clamp(ModConfig.skyIntensity, 0.0, 1.0) * qualityFactor();
         float rain = world.getRainGradient(tickDelta);
         float thunder = world.getThunderGradient(tickDelta);
@@ -54,8 +54,7 @@ public final class CustomSkyRenderer {
 
     public static Vec3d cloudColor(ClientWorld world, float tickDelta, Vec3d vanilla) {
         if (!active(world) || ModConfig.skyMode == 0) return vanilla;
-        float[] rgb = palette(clamp(ModConfig.skyMode, 0, 10), dayPhase(world));
-        adjustColor(rgb, (float) ModConfig.skyBrightness, (float) ModConfig.skySaturation);
+        float[] rgb = adjustColor(palette(clamp(ModConfig.skyMode, 0, 10), dayPhase(world)), (float) ModConfig.skyBrightness, (float) ModConfig.skySaturation);
         float rain = world.getRainGradient(tickDelta);
         float amount = (float) (clamp(ModConfig.skyIntensity, 0.0, 1.0) * 0.24 * qualityFactor());
         float weatherDim = 1.0f - rain * 0.12f;
@@ -120,11 +119,12 @@ public final class CustomSkyRenderer {
         return CUSTOM;
     }
 
-    private static void adjustColor(float[] rgb, float brightness, float saturation) {
+    private static float[] adjustColor(float[] rgb, float brightness, float saturation) {
         float luminance = rgb[0] * 0.2126f + rgb[1] * 0.7152f + rgb[2] * 0.0722f;
-        rgb[0] = clamp((luminance + (rgb[0] - luminance) * saturation) * brightness, 0.0f, 1.0f);
-        rgb[1] = clamp((luminance + (rgb[1] - luminance) * saturation) * brightness, 0.0f, 1.0f);
-        rgb[2] = clamp((luminance + (rgb[2] - luminance) * saturation) * brightness, 0.0f, 1.0f);
+        ADJUSTED[0] = clamp((luminance + (rgb[0] - luminance) * saturation) * brightness, 0.0f, 1.0f);
+        ADJUSTED[1] = clamp((luminance + (rgb[1] - luminance) * saturation) * brightness, 0.0f, 1.0f);
+        ADJUSTED[2] = clamp((luminance + (rgb[2] - luminance) * saturation) * brightness, 0.0f, 1.0f);
+        return ADJUSTED;
     }
 
     private static float qualityFactor() {
