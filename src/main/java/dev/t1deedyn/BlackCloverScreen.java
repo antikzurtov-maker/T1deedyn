@@ -250,7 +250,8 @@ public final class BlackCloverScreen extends Screen {
                 c.fill(iconX+8,ry+18,iconX+24,ry+34,i==selectedFeature?Theme.accentColor():Theme.BORDER);
                 drawText(c,f.name,textX,ry+10,Theme.TEXT,textW);
                 drawText(c,f.description,textX,ry+29,Theme.TEXT_DIM,textW);
-                drawToggle(c,toggleX,ry+18,f.enabled(),Theme.accentColor());
+                drawFeatureIcon(c,f.id(),iconX+8,ry+18,i==selectedFeature?Theme.accentColor():Theme.TEXT_DIM);
+                drawToggle(c,f.id(),toggleX,ry+18,f.enabled(),hovered);
             }
         }finally{c.disableScissor();}
         drawScrollbar(c,vx+vw-3,vy,vh,listContentHeight,scrollOffset,Theme.accentColor());
@@ -329,9 +330,22 @@ public final class BlackCloverScreen extends Screen {
         drawCentered(c,val,x+trackW-19,y+2,Theme.TEXT);
     }
     private double mouseXCache,mouseYCache;
-    private void drawToggle(DrawContext c,int x,int y,boolean enabled,int accent){
-        RoundedRect.fill(c,x,y,40,20,10,enabled?accent:Theme.TOGGLE_OFF);
-        RoundedRect.fill(c,enabled?x+22:x+2,y+2,16,16,8,0xFFFFFFFF);
+    private void drawToggle(DrawContext c,int id,int x,int y,boolean enabled,boolean hovered){
+        Toggle.draw(c,id,x,y,enabled,Theme.accentColor(),Theme.accent2Color(),hovered,false,true);
+    }
+    private void drawFeatureIcon(DrawContext c,int id,int x,int y,int color){
+        switch(id){
+            case 17 -> { c.fill(x+7,y+2,x+11,y+16,color);c.fill(x+2,y+7,x+16,y+11,color);c.fill(x+4,y+4,x+6,y+6,color);c.fill(x+12,y+12,x+14,y+14,color); }
+            case 18 -> { RoundedRect.border(c,x+2,y+1,12,12,6,2,color,0x00000000);c.fill(x+12,y+12,x+18,y+14,color);c.fill(x+14,y+14,x+17,y+17,color); }
+            case 2 -> { RoundedRect.border(c,x+1,y+4,17,12,3,2,color,0x00000000);c.fill(x+5,y+2,x+11,y+5,color);RoundedRect.border(c,x+6,y+6,7,7,4,1,color,0x00000000); }
+            case 0 -> { c.fill(x+8,y,x+10,y+18,color);c.fill(x,y+8,x+18,y+10,color);c.fill(x+3,y+3,x+5,y+5,color);c.fill(x+13,y+13,x+15,y+15,color); }
+            case 1 -> { c.fill(x+7,y+1,x+12,y+7,color);c.fill(x+4,y+7,x+14,y+16,color);c.fill(x+7,y+9,x+11,y+16,Theme.panelColor()); }
+            case 3 -> { RoundedRect.fill(c,x+2,y+8,15,8,4,color);RoundedRect.fill(c,x+5,y+4,8,9,4,color); }
+            case 4 -> { RoundedRect.border(c,x+2,y+2,15,15,2,1,color,0x00000000);c.drawDiagonalLine(x+2,y+2,x+9,y+9,color);c.drawDiagonalLine(x+16,y+2,x+9,y+9,color); }
+            case 5 -> { RoundedRect.border(c,x+2,y+2,15,15,8,1,color,0x00000000);c.fill(x+9,y+5,x+10,y+10,color);c.fill(x+9,y+9,x+14,y+10,color); }
+            case 6 -> { RoundedRect.border(c,x+1,y+4,17,12,3,2,color,0x00000000);RoundedRect.border(c,x+6,y+6,7,7,4,1,color,0x00000000); }
+            default -> CloverMark.draw(c,x,y,18,color);
+        }
     }
     private void drawScrollbar(DrawContext c,int x,int y,int h,int content,int offset,int color){
         if(content<=h||h<=0)return;
@@ -443,7 +457,7 @@ public final class BlackCloverScreen extends Screen {
                 int idx=(int)((my-vy-10+scrollOffset)/ROW_STEP);
                 if(idx>=0&&idx<visibleFeatures.size()){
                     pendingRow=idx;int toggleX=vx+vw-50,ry=vy+10+idx*ROW_STEP-scrollOffset;
-                    pendingRowToggle=inside(mx,my,toggleX,ry+18,40,20);return true;
+                    pendingRowToggle=inside(mx,my,toggleX-4,ry+14,48,28);return true;
                 }
             }
             if(!layout.compact){
