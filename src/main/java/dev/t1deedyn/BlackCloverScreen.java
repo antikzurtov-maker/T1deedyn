@@ -389,8 +389,8 @@ public final class BlackCloverScreen extends Screen {
             drawSettingLabel(c,"Насыщенность: "+(int)Math.round(ModConfig.skySaturation*100)+"%",px+12,y+214,pw-24);
             drawSlider(c,px+10,y+232,pw-20,ModConfig.skySaturation/2.0,0,1,8);
         }finally{c.disableScissor();}
-        int max=Math.max(0,286-(ph-50));
-        if(max>0)drawScrollbar(c,px+pw-5,contentTop,Math.max(1,contentBottom-contentTop),286,settingsScroll,Theme.accentColor());
+        int max=Math.max(0,248-(ph-50));
+        if(max>0)drawScrollbar(c,px+pw-5,contentTop,Math.max(1,contentBottom-contentTop),248,settingsScroll,Theme.accentColor());
     }
     private void setCompactSkySlider(int id,double mouseX){
         int px=layout.x+GAP,pw=layout.width-GAP*2,x=px+10,w=pw-20;
@@ -621,7 +621,7 @@ public final class BlackCloverScreen extends Screen {
     }
     @Override public boolean mouseScrolled(double mx,double my,double horizontal,double vertical){
         if(layout==null)layout=new UiLayout(width,height);
-        if(compactFeatureSettings){int px=layout.x+GAP,py=layout.contentY,pw=layout.width-GAP*2,ph=layout.contentHeight;if(inside(mx,my,px,py,pw,ph)){settingsScroll=clamp(settingsScroll-(int)Math.round(vertical*24),0,Math.max(0,286-(ph-50)));return true;}}
+        if(compactFeatureSettings){int px=layout.x+GAP,py=layout.contentY,pw=layout.width-GAP*2,ph=layout.contentHeight;if(inside(mx,my,px,py,pw,ph)){settingsScroll=clamp(settingsScroll-(int)Math.round(vertical*24),0,Math.max(0,248-(ph-50)));return true;}}
         if(inside(mx,my,layout.sidebarViewportX,layout.sidebarViewportY,layout.sidebarViewportWidth,layout.sidebarViewportHeight)){int max=Math.max(0,TABS.length*(layout.tabHeight+4)-layout.sidebarViewportHeight);sidebarScroll=clamp(sidebarScroll-(int)Math.round(vertical*28),0,max);return true;}
         if(inside(mx,my,layout.centerViewportX,layout.centerViewportY,layout.centerViewportWidth,layout.centerViewportHeight)){int max=Math.max(0,listContentHeight-layout.centerViewportHeight);scrollOffset=clamp(scrollOffset-(int)Math.round(vertical*28),0,max);tabScrollOffsets[selectedTab]=scrollOffset;return true;}
         if(!layout.compact&&inside(mx,my,layout.settingsViewportX,layout.settingsViewportY,layout.settingsViewportWidth,layout.settingsViewportHeight)){settingsScroll=clamp(settingsScroll-(int)(vertical*24),0,Math.max(0,rightContentHeight-layout.settingsViewportHeight));return true;}
