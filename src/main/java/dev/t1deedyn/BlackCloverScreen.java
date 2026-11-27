@@ -276,7 +276,7 @@ public final class BlackCloverScreen extends Screen {
         CloverMark.draw(c,sx+9,sy+9,24,Theme.accentColor());
         drawText(c,general?"ОБЩИЕ НАСТРОЙКИ МЕНЮ":"НАСТРОЙКИ ФУНКЦИИ",sx+39,sy+17,Theme.accentColor(),sw-48);
         int vx=layout.settingsViewportX,vy=layout.settingsViewportY,vw=layout.settingsViewportWidth,vh=layout.settingsViewportHeight;
-        int total=general?390:(selectedFeature>=0&&selectedFeature<visibleFeatures.size()&&(visibleFeatures.get(selectedFeature).id()==17||visibleFeatures.get(selectedFeature).id()==18||visibleFeatures.get(selectedFeature).id()==19?500:visibleFeatures.get(selectedFeature).id()==20)?420:196);
+        int total=general?390:(selectedFeature>=0&&selectedFeature<visibleFeatures.size()&&visibleFeatures.get(selectedFeature).id()==19?500:(selectedFeature>=0&&selectedFeature<visibleFeatures.size()&&(visibleFeatures.get(selectedFeature).id()==17||visibleFeatures.get(selectedFeature).id()==18||visibleFeatures.get(selectedFeature).id()==20)?420:196));
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
             int cy=vy-settingsScroll;
