@@ -38,6 +38,7 @@ public final class CloverFeature {
             case 17 -> Modules.FULLBRIGHT.isEnabled();
             case 18 -> Modules.ZOOM.isEnabled();
             case 19 -> Modules.CUSTOM_SKY.isEnabled();
+            case 20 -> Modules.ENTITY_ANIMATIONS.isEnabled();
             default -> false;
         };
     }
@@ -64,6 +65,7 @@ public final class CloverFeature {
             case 17 -> { Modules.FULLBRIGHT.setEnabled(value); ModConfig.fullbrightEnabled=value; }
             case 18 -> { Modules.ZOOM.setEnabled(value); ModConfig.zoomEnabled=value; }
             case 19 -> { Modules.CUSTOM_SKY.setEnabled(value); ModConfig.customSkyEnabled=value; }
+            case 20 -> { Modules.ENTITY_ANIMATIONS.setEnabled(value); ModConfig.entityAnimationsEnabled=value; }
             default -> { return; }
         }
         ModConfig.save();
@@ -89,7 +91,8 @@ public final class CloverFeature {
         new CloverFeature(5, "Частицы AutoBerry", "Эффект при успешном сборе", 13),
         new CloverFeature(5, "Подсветка ягод", "Подсвечивать найденные ягодные кусты", 14),
         new CloverFeature(5, "Отладка подсветки", "Показывать диагностические метки подсветки", 15),
-        new CloverFeature(6, "Автопроизводительность", "Ограничивать нагрузку визуальных эффектов", 16)
+        new CloverFeature(6, "Автопроизводительность", "Ограничивать нагрузку визуальных эффектов", 16),
+        new CloverFeature(3, "EntityAnimations", "Плавные анимации моделей игроков", 20)
     );
 
     public int id() { return key; }
