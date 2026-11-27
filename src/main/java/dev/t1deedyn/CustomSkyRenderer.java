@@ -40,6 +40,7 @@ public final class CustomSkyRenderer {
 
         float day = dayPhase(world);
         float[] rgb = palette(mode, day);
+        adjustColor(rgb, (float) ModConfig.skyBrightness, (float) ModConfig.skySaturation);
         float intensity = (float) clamp(ModConfig.skyIntensity, 0.0, 1.0) * qualityFactor();
         float rain = world.getRainGradient(tickDelta);
         float thunder = world.getThunderGradient(tickDelta);
@@ -54,6 +55,7 @@ public final class CustomSkyRenderer {
     public static Vec3d cloudColor(ClientWorld world, float tickDelta, Vec3d vanilla) {
         if (!active(world) || ModConfig.skyMode == 0) return vanilla;
         float[] rgb = palette(clamp(ModConfig.skyMode, 0, 10), dayPhase(world));
+        adjustColor(rgb, (float) ModConfig.skyBrightness, (float) ModConfig.skySaturation);
         float rain = world.getRainGradient(tickDelta);
         float amount = (float) (clamp(ModConfig.skyIntensity, 0.0, 1.0) * 0.24 * qualityFactor());
         float weatherDim = 1.0f - rain * 0.12f;
@@ -116,6 +118,13 @@ public final class CustomSkyRenderer {
         CUSTOM[1] = ((color >>> 8) & 255) / 255.0f;
         CUSTOM[2] = (color & 255) / 255.0f;
         return CUSTOM;
+    }
+
+    private static void adjustColor(float[] rgb, float brightness, float saturation) {
+        float luminance = rgb[0] * 0.2126f + rgb[1] * 0.7152f + rgb[2] * 0.0722f;
+        rgb[0] = clamp((luminance + (rgb[0] - luminance) * saturation) * brightness, 0.0f, 1.0f);
+        rgb[1] = clamp((luminance + (rgb[1] - luminance) * saturation) * brightness, 0.0f, 1.0f);
+        rgb[2] = clamp((luminance + (rgb[2] - luminance) * saturation) * brightness, 0.0f, 1.0f);
     }
 
     private static float qualityFactor() {
