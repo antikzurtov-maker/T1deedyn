@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 public final class ModConfig {
     public static final String BUILD_VERSION = "0.4.0";
-    private static final int CONFIG_VERSION = 9;
+    private static final int CONFIG_VERSION = 10;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -30,9 +30,11 @@ public final class ModConfig {
     public static double accentBrightness = 1.0;
     public static boolean skyVisual = true;
     public static boolean customSkyEnabled = false;
-    public static int skyMode = 0;
+    public static int skyMode = 1;
     public static int skyQuality = 1;
     public static double skyIntensity = 0.85;
+    public static double skyBrightness = 1.0;
+    public static double skySaturation = 1.0;
     public static int skyCustomColor = 0xFF6A35B8;
     public static boolean rgbLighting = true;
     public static boolean showFps = true;
@@ -111,9 +113,11 @@ public final class ModConfig {
             accentBrightness = clamp(number(j, "accentBrightness", 1.0), 0.1, 1.0);
             skyVisual = bool(j, "skyVisual", skyVisual);
             customSkyEnabled = bool(j, "customSkyEnabled", false);
-            skyMode = clampInt(integer(j, "skyMode", 0), 0, 10);
+            skyMode = clampInt(integer(j, "skyMode", 1), 0, 10);
             skyQuality = clampInt(integer(j, "skyQuality", 1), 0, 2);
             skyIntensity = clamp(number(j, "skyIntensity", 0.85), 0.0, 1.0);
+            skyBrightness = clamp(number(j, "skyBrightness", 1.0), 0.5, 2.0);
+            skySaturation = clamp(number(j, "skySaturation", 1.0), 0.0, 2.0);
             skyCustomColor = integer(j, "skyCustomColor", 0xFF6A35B8) | 0xFF000000;
             rgbLighting = bool(j, "rgbLighting", rgbLighting);
             showFps = bool(j, "showFps", true);
@@ -136,6 +140,8 @@ public final class ModConfig {
             zoomSmoothCamera = bool(j, "zoomSmoothCamera", false);
             menuSounds = bool(j, "menuSounds", true);
             int loadedVersion = integer(j, "configVersion", 0);
+            // Earlier CustomSky defaulted to Vanilla, making the enabled toggle appear broken.
+            if (loadedVersion < 10 && skyMode == 0) skyMode = 1;
             autoBerryEnabled = bool(j, "autoBerryEnabled", false);
             autoBerryToggleKey = clampInt(integer(j, "autoBerryToggleKey", -1), -1, 348);
             autoBerryAccordion = bool(j, "autoBerryAccordion", false);
@@ -198,6 +204,8 @@ public final class ModConfig {
         j.addProperty("skyMode", skyMode);
         j.addProperty("skyQuality", skyQuality);
         j.addProperty("skyIntensity", skyIntensity);
+        j.addProperty("skyBrightness", skyBrightness);
+        j.addProperty("skySaturation", skySaturation);
         j.addProperty("skyCustomColor", skyCustomColor);
         j.addProperty("rgbLighting", rgbLighting);
         j.addProperty("showFps", showFps);
