@@ -27,7 +27,8 @@ public final class BlackCloverScreen extends Screen {
     private final int[] tabScrollOffsets=new int[TABS.length];
     private int listContentHeight;
     private double pressStartX,pressStartY;
-    private boolean touchScrolling,draggingListScrollbar;
+    private boolean touchScrolling,draggingListScrollbar,pendingRowToggle;
+    private int pendingRow=-1;
     private int listDragStartY,listDragStartOffset;
     private boolean searchFocused, profileModal, themeDropdown, profileDropdown;
     private String search="", profileName="profile-1", selectedProfile="";
@@ -437,7 +438,10 @@ public final class BlackCloverScreen extends Screen {
             }
             if(inside(mx,my,vx,vy,vw,vh)){
                 int idx=(int)((my-vy-10+scrollOffset)/ROW_STEP);
-                if(idx>=0&&idx<visibleFeatures.size()){selectedFeature=idx;calculateRightContent();CloverFeature f=visibleFeatures.get(idx);int toggleX=vx+vw-50,ry=vy+10+idx*ROW_STEP-scrollOffset;if(inside(mx,my,toggleX,ry+18,40,20))f.setEnabled(!f.enabled());return true;}
+                if(idx>=0&&idx<visibleFeatures.size()){
+                    pendingRow=idx;int toggleX=vx+vw-50,ry=vy+10+idx*ROW_STEP-scrollOffset;
+                    pendingRowToggle=inside(mx,my,toggleX,ry+18,40,20);return true;
+                }
             }
             if(!layout.compact){
                 int rx=layout.settingsViewportX,ry=layout.settingsViewportY-settingsScroll,rw=layout.settingsViewportWidth;
@@ -483,7 +487,14 @@ public final class BlackCloverScreen extends Screen {
     @Override public boolean mouseReleased(double mx,double my,int button){
         if(button==0&&draggingSlider>=0){draggingSlider=-1;return true;}
         if(button==0&&draggingListScrollbar){draggingListScrollbar=false;return true;}
-        if(button==0&&touchScrolling){touchScrolling=false;return true;}
+        if(button==0){
+            if(!touchScrolling&&pendingRow>=0&&pendingRow<visibleFeatures.size()){
+                selectedFeature=pendingRow;calculateRightContent();
+                if(pendingRowToggle){CloverFeature feature=visibleFeatures.get(pendingRow);feature.setEnabled(!feature.enabled());}
+            }
+            pendingRow=-1;pendingRowToggle=false;
+            if(touchScrolling){touchScrolling=false;return true;}
+        }
         return super.mouseReleased(mx,my,button);
     }
     @Override public boolean keyPressed(int key,int scan,int mods){
