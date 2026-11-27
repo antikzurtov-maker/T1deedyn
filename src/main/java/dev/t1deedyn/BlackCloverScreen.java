@@ -365,7 +365,7 @@ public final class BlackCloverScreen extends Screen {
             case 0 -> { c.fill(x+8,y,x+10,y+18,color);c.fill(x,y+8,x+18,y+10,color);c.fill(x+3,y+3,x+5,y+5,color);c.fill(x+13,y+13,x+15,y+15,color); }
             case 1 -> { c.fill(x+7,y+1,x+12,y+7,color);c.fill(x+4,y+7,x+14,y+16,color);c.fill(x+7,y+9,x+11,y+16,Theme.panelColor()); }
             case 3 -> { RoundedRect.fill(c,x+2,y+8,15,8,4,color);RoundedRect.fill(c,x+5,y+4,8,9,4,color); }
-            case 4 -> { RoundedRect.border(c,x+2,y+2,15,15,2,1,color,0x00000000);c.drawDiagonalLine(x+2,y+2,x+9,y+9,color);c.drawDiagonalLine(x+16,y+2,x+9,y+9,color); }
+            case 4 -> { RoundedRect.border(c,x+2,y+2,15,15,2,1,color,0x00000000);c.drawHorizontalLine(x+3,x+15,y+9,color);c.drawVerticalLine(x+9,y+3,y+15,color); }
             case 5 -> { RoundedRect.border(c,x+2,y+2,15,15,8,1,color,0x00000000);c.fill(x+9,y+5,x+10,y+10,color);c.fill(x+9,y+9,x+14,y+10,color); }
             case 6 -> { RoundedRect.border(c,x+1,y+4,17,12,3,2,color,0x00000000);RoundedRect.border(c,x+6,y+6,7,7,4,1,color,0x00000000); }
             default -> CloverMark.draw(c,x,y,18,color);
