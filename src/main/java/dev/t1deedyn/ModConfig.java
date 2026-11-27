@@ -9,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ModConfig {
-    public static final String BUILD_VERSION = "0.3.0";
-    private static final int CONFIG_VERSION = 8;
+    public static final String BUILD_VERSION = "0.4.0";
+    private static final int CONFIG_VERSION = 9;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -80,6 +80,9 @@ public final class ModConfig {
     public static int berryHighlightScanTicks = 5;
     public static int berryHighlightColor = 0xFF55E58A;
     public static boolean berryHighlightDebug = false;
+    public static boolean entityAnimationsEnabled = false;
+    public static int entityAnimationMode = 0;
+    public static double entityAnimationIntensity = 0.65;
 
     private ModConfig() {}
 
@@ -157,6 +160,9 @@ public final class ModConfig {
             berryHighlightScanTicks = clampInt(integer(j, "berryHighlightScanTicks", 5), 1, 40);
             berryHighlightColor = integer(j, "berryHighlightColor", 0xFF55E58A) | 0xFF000000;
             berryHighlightDebug = bool(j, "berryHighlightDebug", false);
+            entityAnimationsEnabled = bool(j, "entityAnimationsEnabled", false);
+            entityAnimationMode = clampInt(integer(j, "entityAnimationMode", 0), 0, 2);
+            entityAnimationIntensity = clamp(number(j, "entityAnimationIntensity", 0.65), 0.0, 1.0);
             // Older configs limited discovery to interaction reach, missing bushes ahead of a minecart.
             if (loadedVersion < 4) {
                 autoBerryLimitReach = false;
@@ -236,6 +242,9 @@ public final class ModConfig {
         j.addProperty("berryHighlightScanTicks", berryHighlightScanTicks);
         j.addProperty("berryHighlightColor", berryHighlightColor);
         j.addProperty("berryHighlightDebug", berryHighlightDebug);
+        j.addProperty("entityAnimationsEnabled", entityAnimationsEnabled);
+        j.addProperty("entityAnimationMode", entityAnimationMode);
+        j.addProperty("entityAnimationIntensity", entityAnimationIntensity);
         try {
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, GSON.toJson(j));
