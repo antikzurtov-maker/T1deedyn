@@ -307,7 +307,7 @@ public final class BlackCloverScreen extends Screen {
                 c.drawText(textRenderer,feature.name,vx,cy+2,Theme.TEXT,false);
                 drawText(c,feature.description,vx,cy+22,Theme.TEXT_DIM,vw);
                 drawSettingLabel(c,"Состояние",vx,cy+58,vw);
-                drawToggle(c,vx+vw-42,cy+76,feature.enabled(),Theme.accentColor());
+                drawToggle(c,feature.id(),vx+vw-42,cy+76,feature.enabled(),false);
                 c.drawText(textRenderer,feature.enabled()?"Включено":"Выключено",vx,cy+105,feature.enabled()?Theme.accentColor():Theme.TEXT_DIM,false);
                 drawSettingLabel(c,"Дополнительные параметры",vx,cy+143,vw);
             }
