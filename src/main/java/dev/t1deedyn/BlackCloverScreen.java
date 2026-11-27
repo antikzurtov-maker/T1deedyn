@@ -275,7 +275,7 @@ public final class BlackCloverScreen extends Screen {
         CloverMark.draw(c,sx+9,sy+9,24,Theme.accentColor());
         drawText(c,general?"ОБЩИЕ НАСТРОЙКИ МЕНЮ":"НАСТРОЙКИ ФУНКЦИИ",sx+39,sy+17,Theme.accentColor(),sw-48);
         int vx=layout.settingsViewportX,vy=layout.settingsViewportY,vw=layout.settingsViewportWidth,vh=layout.settingsViewportHeight;
-        int total=general?390:196;
+        int total=general?390:(selectedFeature>=0&&selectedFeature<visibleFeatures.size()&&(visibleFeatures.get(selectedFeature).id()==17||visibleFeatures.get(selectedFeature).id()==18)?420:196);
         c.enableScissor(vx,vy,vx+vw,vy+vh);
         try{
             int cy=vy-settingsScroll;
@@ -310,6 +310,27 @@ public final class BlackCloverScreen extends Screen {
                 drawToggle(c,feature.id(),vx+vw-42,cy+76,feature.enabled(),false);
                 c.drawText(textRenderer,feature.enabled()?"Включено":"Выключено",vx,cy+105,feature.enabled()?Theme.accentColor():Theme.TEXT_DIM,false);
                 drawSettingLabel(c,"Дополнительные параметры",vx,cy+143,vw);
+                if(feature.id()==17){
+                    drawSettingLabel(c,"Режим: "+(ModConfig.fullbrightMode==0?"Ночное зрение":"Максимальная яркость"),vx,cy+166,vw);
+                    drawSettingLabel(c,"Яркость: "+ModConfig.fullbrightBrightness+"%",vx,cy+190,vw);
+                    drawSlider(c,vx+8,cy+204,vw-16,ModConfig.fullbrightBrightness/100.0,0,1,2);
+                    drawSettingLabel(c,"Плавное включение",vx,cy+229,vw);
+                    drawToggle(c,30,vx+vw-42,cy+246,ModConfig.fullbrightSmooth,false);
+                    drawSettingLabel(c,"Не трогать Незер и Энд",vx,cy+274,vw);
+                    drawToggle(c,31,vx+vw-42,cy+291,ModConfig.fullbrightSkipDimensions,false);
+                }else if(feature.id()==18){
+                    drawSettingLabel(c,"Режим: "+(ModConfig.zoomToggleMode?"Переключение":"Удержание"),vx,cy+166,vw);
+                    drawSettingLabel(c,"Кратность: "+String.format(java.util.Locale.ROOT,"%.1fx",ModConfig.zoomDefault),vx,cy+190,vw);
+                    drawSlider(c,vx+8,cy+204,vw-16,(ModConfig.zoomDefault-1.5)/8.5,0,1,3);
+                    drawSettingLabel(c,"Скорость: "+(int)ModConfig.zoomSpeed,vx,cy+229,vw);
+                    drawSlider(c,vx+8,cy+242,vw-16,(ModConfig.zoomSpeed-1)/19,0,1,4);
+                    drawSettingLabel(c,"Колесо меняет кратность",vx,cy+267,vw);
+                    drawToggle(c,32,vx+vw-42,cy+284,ModConfig.zoomWheel,false);
+                    drawSettingLabel(c,"Снижать чувствительность",vx,cy+311,vw);
+                    drawToggle(c,33,vx+vw-42,cy+328,ModConfig.zoomSensitivity,false);
+                    drawSettingLabel(c,"Плавная камера при зуме",vx,cy+355,vw);
+                    drawToggle(c,34,vx+vw-42,cy+372,ModConfig.zoomSmoothCamera,false);
+                }
             }
         }finally{c.disableScissor();}
         drawScrollbar(c,vx+vw-2,vy,vh,total,settingsScroll,Theme.accentColor());
@@ -411,7 +432,7 @@ public final class BlackCloverScreen extends Screen {
     private void setSliderValue(int id,double mouseX){
         int x=layout.settingsViewportX+12,w=layout.settingsViewportWidth-24;
         double ratio=clamp((mouseX-(x+6.0))/Math.max(1,w-12),0,1);
-        if(id==0)ModConfig.menuOpacity=0.72+ratio*0.28;else ModConfig.backgroundDim=ratio*0.75;
+        if(id==0)ModConfig.menuOpacity=0.72+ratio*0.28;else if(id==1)ModConfig.backgroundDim=ratio*0.75;else if(id==2)ModConfig.fullbrightBrightness=(int)Math.round(ratio*100);else if(id==3)ModConfig.zoomDefault=1.5+ratio*8.5;else if(id==4)ModConfig.zoomSpeed=1+ratio*19;
         ModConfig.save();
     }
     private void drawBounds(DrawContext c){
