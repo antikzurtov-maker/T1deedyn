@@ -9,6 +9,7 @@
   "license": "MIT",
   "environment": "client",
   "entrypoints": { "client": ["dev.t1deedyn.T1deedynClient"] },
+  "mixins": ["t1deedyn.mixins.json"],
   "depends": {
     "fabricloader": ">=0.16.5",
     "minecraft": "1.21.0",
