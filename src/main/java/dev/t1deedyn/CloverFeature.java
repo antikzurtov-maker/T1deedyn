@@ -78,7 +78,7 @@ public final class CloverFeature {
         new CloverFeature(0, "Низкий огонь", "Уменьшенная высота огня от первого лица", 1),
         new CloverFeature(0, "Плавная камера", "Дополнительная плавность движения камеры", 2),
         new CloverFeature(0, "Визуальное небо", "Старая настройка визуального неба", 3),
-        new CloverFeature(0, "CustomSky", "Палитры неба, облаков и звёзд", 19),
+        new CloverFeature(2, "CustomSky", "Палитры неба, облаков и звёзд", 19),
         new CloverFeature(0, "RGB-подсветка", "Цветовая подсветка интерфейсных элементов", 4),
         new CloverFeature(1, "AutoBerry", "Автоматический сбор созревших ягод", 5),
         new CloverFeature(3, "Анимации меню", "Плавное появление элементов интерфейса", 6),
