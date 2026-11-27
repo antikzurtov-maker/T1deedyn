@@ -25,6 +25,7 @@ public final class ModConfig {
     public static double menuOpacity = 0.94;
     public static double backgroundDim = 0.25;
     public static int accentTheme = 0;
+    public static boolean tintMenuBackground = true;
     public static String accentHex = "#2BE36B";
     public static double accentBrightness = 1.0;
     public static boolean skyVisual = true;
@@ -81,6 +82,8 @@ public final class ModConfig {
             menuOpacity = clamp(number(j, "menuOpacity", menuOpacity), 0.72, 1.0);
             backgroundDim = clamp(number(j, "backgroundDim", backgroundDim), 0.0, 0.75);
             accentTheme = clampInt(integer(j, "accentTheme", 0), 0, 19);
+            tintMenuBackground = bool(j, "tintMenuBackground", true);
+            Theme.setTintBackground(tintMenuBackground);
             accentHex = accentTheme == 0 ? "#2BE36B" : (validHex(string(j, "accentHex", accentHex)) ? string(j, "accentHex", accentHex).toUpperCase(java.util.Locale.ROOT) : "#2BE36B");
             uiScale = clampInt(integer(j, "uiScale", 0), 0, 4);
             showBounds = bool(j, "showBounds", false);
@@ -145,6 +148,7 @@ public final class ModConfig {
         j.addProperty("menuOpacity", menuOpacity);
         j.addProperty("backgroundDim", backgroundDim);
         j.addProperty("accentTheme", accentTheme);
+        j.addProperty("tintMenuBackground", tintMenuBackground);
         j.addProperty("accentHex", accentHex);
         j.addProperty("accentBrightness", accentBrightness);
         j.addProperty("skyVisual", skyVisual);
