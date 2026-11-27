@@ -249,7 +249,6 @@ public final class BlackCloverScreen extends Screen {
                 c.fill(vx+7,ry+10,vx+9,ry+ROW_HEIGHT-14,i==selectedFeature?Theme.accentColor():Theme.BORDER);
                 int iconX=vx+8, textX=iconX+36+10, toggleX=vx+vw-50;
                 int textW=Math.max(1,vw-10-36-10-8-40-10-10);
-                c.fill(iconX+8,ry+18,iconX+24,ry+34,i==selectedFeature?Theme.accentColor():Theme.BORDER);
                 drawText(c,f.name,textX,ry+10,Theme.TEXT,textW);
                 drawText(c,f.description,textX,ry+29,Theme.TEXT_DIM,textW);
                 drawFeatureIcon(c,f.id(),iconX+8,ry+18,i==selectedFeature?Theme.accentColor():Theme.TEXT_DIM);
