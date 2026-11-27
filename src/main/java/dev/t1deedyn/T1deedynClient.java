@@ -30,6 +30,7 @@ public final class T1deedynClient implements ClientModInitializer {
         Modules.FULLBRIGHT.setEnabled(ModConfig.fullbrightEnabled);
         Modules.ZOOM.setEnabled(ModConfig.zoomEnabled);
         Modules.CUSTOM_SKY.setEnabled(ModConfig.customSkyEnabled);
+        Modules.ENTITY_ANIMATIONS.setEnabled(ModConfig.entityAnimationsEnabled);
         Theme.select(Theme.Preset.values()[Math.max(0, Math.min(Theme.Preset.values().length - 1, ModConfig.accentTheme))]);
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.t1deedyn.open_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X,

@@ -9,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ModConfig {
-    public static final String BUILD_VERSION = "0.3.0";
-    private static final int CONFIG_VERSION = 8;
+    public static final String BUILD_VERSION = "0.4.0";
+    private static final int CONFIG_VERSION = 11;
     private static final Path FILE = Path.of("config", "t1deedyn.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -30,9 +30,12 @@ public final class ModConfig {
     public static double accentBrightness = 1.0;
     public static boolean skyVisual = true;
     public static boolean customSkyEnabled = false;
-    public static int skyMode = 0;
+    public static int skyMode = 1;
     public static int skyQuality = 1;
     public static double skyIntensity = 0.85;
+    public static double skyBrightness = 1.0;
+    public static double skySaturation = 1.0;
+    public static int skyCustomColor = 0xFF6A35B8;
     public static boolean rgbLighting = true;
     public static boolean showFps = true;
     public static boolean showPing = true;
@@ -80,6 +83,9 @@ public final class ModConfig {
     public static int berryHighlightScanTicks = 5;
     public static int berryHighlightColor = 0xFF55E58A;
     public static boolean berryHighlightDebug = false;
+    public static boolean entityAnimationsEnabled = false;
+    public static int entityAnimationMode = 0;
+    public static double entityAnimationIntensity = 0.65;
 
     private ModConfig() {}
 
@@ -107,9 +113,12 @@ public final class ModConfig {
             accentBrightness = clamp(number(j, "accentBrightness", 1.0), 0.1, 1.0);
             skyVisual = bool(j, "skyVisual", skyVisual);
             customSkyEnabled = bool(j, "customSkyEnabled", false);
-            skyMode = clampInt(integer(j, "skyMode", 0), 0, 6);
+            skyMode = clampInt(integer(j, "skyMode", 1), 0, 10);
             skyQuality = clampInt(integer(j, "skyQuality", 1), 0, 2);
             skyIntensity = clamp(number(j, "skyIntensity", 0.85), 0.0, 1.0);
+            skyBrightness = clamp(number(j, "skyBrightness", 1.0), 0.5, 2.0);
+            skySaturation = clamp(number(j, "skySaturation", 1.0), 0.0, 2.0);
+            skyCustomColor = integer(j, "skyCustomColor", 0xFF6A35B8) | 0xFF000000;
             rgbLighting = bool(j, "rgbLighting", rgbLighting);
             showFps = bool(j, "showFps", true);
             showPing = bool(j, "showPing", true);
@@ -157,6 +166,9 @@ public final class ModConfig {
             berryHighlightScanTicks = clampInt(integer(j, "berryHighlightScanTicks", 5), 1, 40);
             berryHighlightColor = integer(j, "berryHighlightColor", 0xFF55E58A) | 0xFF000000;
             berryHighlightDebug = bool(j, "berryHighlightDebug", false);
+            entityAnimationsEnabled = bool(j, "entityAnimationsEnabled", false);
+            entityAnimationMode = clampInt(integer(j, "entityAnimationMode", 0), 0, 2);
+            entityAnimationIntensity = clamp(number(j, "entityAnimationIntensity", 0.65), 0.0, 1.0);
             // Older configs limited discovery to interaction reach, missing bushes ahead of a minecart.
             if (loadedVersion < 4) {
                 autoBerryLimitReach = false;
@@ -190,6 +202,9 @@ public final class ModConfig {
         j.addProperty("skyMode", skyMode);
         j.addProperty("skyQuality", skyQuality);
         j.addProperty("skyIntensity", skyIntensity);
+        j.addProperty("skyBrightness", skyBrightness);
+        j.addProperty("skySaturation", skySaturation);
+        j.addProperty("skyCustomColor", skyCustomColor);
         j.addProperty("rgbLighting", rgbLighting);
         j.addProperty("showFps", showFps);
         j.addProperty("showPing", showPing);
@@ -236,6 +251,9 @@ public final class ModConfig {
         j.addProperty("berryHighlightScanTicks", berryHighlightScanTicks);
         j.addProperty("berryHighlightColor", berryHighlightColor);
         j.addProperty("berryHighlightDebug", berryHighlightDebug);
+        j.addProperty("entityAnimationsEnabled", entityAnimationsEnabled);
+        j.addProperty("entityAnimationMode", entityAnimationMode);
+        j.addProperty("entityAnimationIntensity", entityAnimationIntensity);
         try {
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, GSON.toJson(j));
