@@ -6,7 +6,8 @@
   "client": [
     "LightmapTextureManagerMixin",
     "GameRendererMixin",
-    "MouseMixin"
+    "MouseMixin",
+    "ClientWorldSkyMixin"
   ],
   "injectors": { "defaultRequire": 1 }
 }
