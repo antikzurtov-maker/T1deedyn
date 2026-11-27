@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.t1deedyn.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "LightmapTextureManagerMixin",
+    "GameRendererMixin",
+    "MouseMixin"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}
